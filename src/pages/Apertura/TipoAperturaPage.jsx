@@ -1,50 +1,53 @@
-import React, {useEffect} from 'react'
-import PropTypes from 'prop-types'
-import { Typography, Button, Box, Divider } from '@material-ui/core';
-import { Container, Col, Row } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
-import { useHistory } from "react-router-dom";
+import React, { useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
+import { Container, Typography, Box } from '@mui/material';
+import { authenticationService } from '../../services';
 
-const TipoAperturaPage = props => {
-    let history = useHistory();
+const TipoAperturaPage = () => {
+  let history = useHistory();
 
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token == null) 
-            history.push('/login')
-          
-    }, []);
+  useEffect(() => {
+    // Verificar si la sesión es válida
+    if (!authenticationService.checkSessionValidity()) {
+      history.push('/');
+      return;
+    }
+  }, [history]);
 
-    return (
-        <>
+  return (
+    <Container maxWidth="md" style={{ marginTop: '2rem' }}>
+      <Box 
+        display="flex" 
+        flexDirection="column" 
+        alignItems="center" 
+        justifyContent="center"
+        minHeight="60vh"
+        textAlign="center"
+      >
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          gutterBottom
+          style={{ 
+            color: 'var(--main-green)',
+            fontWeight: 'bold',
+            marginBottom: '2rem'
+          }}
+        >
+          Seleccione el tipo de apertura que desea hacer
+        </Typography>
+        
+        {/* Aquí se agregarán las opciones de tipo de apertura */}
+        <Typography 
+          variant="body1" 
+          color="textSecondary"
+          style={{ marginTop: '2rem' }}
+        >
+          Las opciones de apertura se mostrarán próximamente...
+        </Typography>
+      </Box>
+    </Container>
+  );
+};
 
-        <Col xs={12} md={{ span: 8, offset: 2 }}>
-            <Box boxShadow={2} pb={3}>
-            <Box p={2} pr={4} pl={4} mb={5} bgcolor="#EFEFEF" className="text-center">
-                <Typography mt={2}>Elija el tipo de cuenta que desea abrir.</Typography>
-            </Box>
-            <Container spacing={2}>
-                <Row>
-                    <Col xs={12} sm={6} className="text-center">
-                        <Typography><b>Persona Física</b></Typography>
-                        <Divider></Divider>
-                        <Link to="/apertura/persona-fisica"><Button className="btn-deal-success mt-3">Iniciar onboarding</Button></Link>
-                    </Col>
-                    <Col xs={12} sm={6} className="text-center">
-                        <Typography><b>Persona Jurídica</b></Typography>
-                        <Divider></Divider>
-                        <Link to="/apertura/persona-juridica"><Button className="btn-deal-success mt-3">Iniciar onboarding</Button></Link>
-                    </Col>
-                </Row>
-            </Container>
-            </Box>
-        </Col>
-        </>
-    )
-}
-
-TipoAperturaPage.propTypes = {
-
-}
-
-export default TipoAperturaPage
+export default TipoAperturaPage;

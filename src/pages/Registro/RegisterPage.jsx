@@ -8,9 +8,14 @@ const RegisterPage = props => {
   
   useEffect(() => {
       const token = localStorage.getItem("token");
-      if (token)
-        history.push('/apertura/persona-fisica')
-    }, [])
+      if (token) {
+        // Verificar si la sesión es válida antes de redirigir
+        const { authenticationService } = require('../../services');
+        if (authenticationService.checkSessionValidity()) {
+          history.push('/tipo-apertura');
+        }
+      }
+    }, [history])
 
     return (
       <>

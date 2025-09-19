@@ -1,6 +1,8 @@
 import React, {useEffect, useState} from 'react'
 import PropTypes from 'prop-types'
-import Bar from '../components/Bar'
+import HeaderBar from '../components/Bar'
+import { Footer } from '../components/Footer'
+import ProtectedRoute from '../components/ProtectedRoute'
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { Container, Col, Row } from 'react-bootstrap'
 import GraciasPorRegistrartePage from './Registro/GraciasPorRegistrartePage'
@@ -17,12 +19,18 @@ import { BrowserRouter as Router,
         Switch,
         Route } from 'react-router-dom'
 import AperturaPersonaJuridicaPage from './Apertura/AperturaPersonaJuridicaPage';
+import ValidarCodigoPage from './ValidarCodigo/ValidarCodigoPage';
+import { authenticationService } from '../services';
 
 
 const theme = createMuiTheme({
     typography: {
       fontFamily: [
-        '"Montserrat"',
+        '"Inter"',
+        '"Roboto"',
+        '"Helvetica"',
+        '"Arial"',
+        'sans-serif',
       ].join(','),
     },
   });
@@ -32,7 +40,8 @@ const Layout = props => {
     const [loggedIn, setLoggedIn] = useState(false)
 
     const evaluarSesion = () => {
-        const isLoggedIn = localStorage.getItem("token") !== null
+        const isLoggedIn = localStorage.getItem("token") !== null && 
+                          authenticationService.checkSessionValidity()
         setLoggedIn(isLoggedIn)
     }
 
@@ -45,13 +54,14 @@ const Layout = props => {
             <ThemeProvider theme={theme}>
             <CssBaseline />
             <Router>
-              <Bar loggedIn={loggedIn}></Bar>
+              <HeaderBar loggedIn={loggedIn}></HeaderBar>
               <Container className="pb-4">
                   <Switch>
                     <Route exact path="/" component={RegisterPage}></Route>
                     <Route exact path="/pdf" component={PDFPage}></Route>
                     <Route exact path="/gracias-por-registrarte/:email" name="gracias" component={GraciasPorRegistrartePage}></Route>
                     <Route exact path="/registro-finalizado/:email/:token" component={RegistroFinalizadoPage}></Route>
+                    <Route exact path="/validar-codigo/:email" component={ValidarCodigoPage}></Route>
 
                     <Route exact path="/apertura/persona-juridica/:paso?">
                         <Col>
@@ -64,9 +74,7 @@ const Layout = props => {
                         </Col>
                     </Route>
 
-                    <Route exact path="/tipo-apertura">
-                          <TipoAperturaPage />
-                    </Route>
+                    <ProtectedRoute exact path="/tipo-apertura" component={TipoAperturaPage} />
                     
                     <Route exact path="/login">
                         <Col>
@@ -81,6 +89,7 @@ const Layout = props => {
                     </Route>
                   </Switch>
             </Container> 
+            <Footer />
           </Router>
 
 

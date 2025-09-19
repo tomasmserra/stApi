@@ -1,76 +1,110 @@
-import React, {useEffect, useState} from 'react'
-
-import Button from '@material-ui/core/Button';
-import { IconButton } from '@material-ui/core';
-import logo from './../../images/logo.png'
-import GreenButton from './../Buttons/GreenButton'
-import BlueButton from './../Buttons/BlueButton'
-import { makeStyles } from '@material-ui/core/styles';
-import { Link } from 'react-router-dom'
-import { useHistory } from "react-router-dom";
-
-import {
-    AppBar,
-    Toolbar,
-    Typography,
-  } from "@material-ui/core";
- 
-import './style.css'
+import React from "react"
+import PropTypes from "prop-types"
+import AppBar from "@material-ui/core/AppBar"
+import Toolbar from "@material-ui/core/Toolbar"
+import { Container, Row, Col } from "react-bootstrap"
+import CssBaseline from "@material-ui/core/CssBaseline"
+import useScrollTrigger from "@material-ui/core/useScrollTrigger"
+import { Button } from "@material-ui/core"
+import logo from '../../images/logo.png'
+import Slide from "@material-ui/core/Slide"
+import ButtonHeader from "../elements/ButtonHeader"
+import menuMock from "../../__mocks__/menu"
+import { Link } from "react-router-dom"
+import { MobileButtons } from "../elements"
   
-const useStyles = makeStyles((theme) => ({
-  title: {
-    flexGrow: 1,
-  },
-}));
+function HideOnScroll(props) {
+  const { children, window } = props
+  // Note that you normally won't need to set the window ref as useScrollTrigger
+  // will default to window.
+  // This is only being set here because the demo is in an iframe.
+  const trigger = useScrollTrigger({ target: window ? window() : undefined })
 
-const Bar = ({loggedIn}) => {
-  
-    let history = useHistory(); 
-    const classes = useStyles();
-
-    // useEffect(() => {
-    //   debugger
-    //     if (token !== null) 
-    //       setLoggedIn(true)
-
-    // }, [token]);
-
-
-    const cerrarSesion = () => {
-      history.push('/login')
-    }
-
-    return (
-            <AppBar style={{marginBottom : 50}} position="static" color="transparent">
-                <Toolbar>
-                    <IconButton edge="start" color="inherit" aria-label="menu">
-                      <img src={logo} alt="Logo" width={120}/>
-                    </IconButton>
-                    <Typography variant="h6" className={classes.title}>
-                    </Typography>
-                    <Button>INICIO</Button>
-                    <Button>QUIENES SOMOS</Button>
-                    <Button>SERVICIOS</Button>
-                    {/* <Button>RESEARCH</Button>
-                    <Button>OPERAR</Button>
-                    <Button>P.U.C.</Button>
-                    <Button>HECHOS RELEVANTES</Button> */}
-                    
-                    <BlueButton text="MI CUENTA"></BlueButton>
-                    
-                    {
-                      loggedIn ? <Button onClick={cerrarSesion}>Cerrar Sesión</Button> : <GreenButton text="ABRIR CUENTA"></GreenButton>
-                    }
-                    
-                </Toolbar>
-            </AppBar>
-    )
+  return (
+    <Slide appear={false} direction="down" in={!trigger}>
+      {children}
+    </Slide>
+  )
 }
 
-
-Bar.propTypes = {
-
+HideOnScroll.propTypes = {
+  children: PropTypes.element.isRequired,
+  /**
+   * Injected by the documentation to work in an iframe.
+   * You won't need it on your project.
+   */
+  window: PropTypes.func,
 }
 
+export default function HeaderBar(props) {
+  return (
+    <React.Fragment>
+      <CssBaseline />
+      <HideOnScroll {...props}>
+        <AppBar color="default" style={{marginBottom: 50}}>
+          <Toolbar>
+            <Container>
+              <Row className="header d-none d-lg-flex">
+                <Col xs={2} className="my-auto">
+                  <Link to="/">
+                    <img src={logo} alt="" className="p-1 w-100" />
+                  </Link>
+                </Col>
+                <Col className="my-auto text-right" xs={10}>
+                  {menuMock.map((x) => {
+                    if (x.link)
+                      return (
+                        <Link to={x.link} className="inline">
+                          <ButtonHeader title={x.title} subItems={x.subItems} />
+                        </Link>
+                      )
+                    else
+                      return (
+                        <ButtonHeader title={x.title} subItems={x.subItems} />
+                      )
+                  })}
+                  <a
+                    href={"/apertura"}
+                    rel="noreferrer"
+                  >
+                    <Button className="btn-deal ml-2">Abrir Cuenta</Button>
+                  </a>
+                  <a
+                    href={"/login"}
+                    rel="noreferrer"
+                  >
+                    <Button variant="outlined" color="primary" className="ml-2 btn-deal-light">
+                      Ingresar
+                    </Button>
+                  </a>
+                  <a
+                    href={"https://anima.stsecurities.com.ar"}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Button className="btn-deal btn-deal-blue ml-2">Operar</Button>
+                  </a>
+                </Col>
+              </Row>
+              <Row className="header d-lg-none">
+                <Col className="my-auto">
+                  <img
+                    src={logo}
+                    alt="logo"
+                    className="p-1"
+                    style={{ height: "70px" }}
+                  />
+                </Col>
+                <Col className="my-auto text-right">
+                  <MobileButtons />
+                </Col>
+              </Row>
+            </Container>
+          </Toolbar>
+        </AppBar>
+      </HideOnScroll>
+      {/* <Toolbar /> */}
+    </React.Fragment>
+  )
+}
 
-export default Bar
