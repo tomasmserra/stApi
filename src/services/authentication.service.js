@@ -9,6 +9,9 @@ export const authenticationService = {
     validateCode,
     validarRegistro,
     getSolicitudesUsuario,
+    crearSolicitud,
+    getDatosPrincipalesIndividuo,
+    saveDatosPrincipalesIndividuo,
     logout,
     isSessionExpired,
     checkSessionValidity,
@@ -159,6 +162,74 @@ async function getSolicitudesUsuario(idUsuario) {
 
     const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
     let url = `${ghostUrl}/api/solicitudes/usuario/${idUsuario}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function crearSolicitud(tipo, idUsuarioCargo) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/solicitudes?tipo=${tipo}&idUsuarioCargo=${idUsuarioCargo}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function getDatosPrincipalesIndividuo(idUsuario) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/datos-principales/${idUsuario}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function saveDatosPrincipalesIndividuo(datos) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datos)
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/datos-principales/${datos.idUsuario}`;
 
     const response = await fetch(url, requestOptions);
     const result = await response.json();

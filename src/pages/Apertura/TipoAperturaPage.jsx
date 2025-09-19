@@ -65,9 +65,37 @@ const TipoAperturaPage = () => {
     cargarSolicitudes();
   }, [history]);
 
-  const handleNuevaSolicitud = (tipo) => {
-    // TODO: Implementar navegación a formulario de nueva solicitud
-    console.log('Nueva solicitud:', tipo);
+  const handleNuevaSolicitud = async (tipo) => {
+    try {
+      const currentUser = authenticationService.currentUserValue;
+      if (!currentUser || !currentUser.id) {
+        console.error('Usuario no encontrado');
+        return;
+      }
+
+      // Crear la solicitud en el backend
+      const response = await authenticationService.crearSolicitud(tipo, currentUser.id);
+      
+      if (response && (response.status === 200 || response.ok)) {
+        console.log('Solicitud creada:', response);
+        
+        // Navegar según el tipo
+        if (tipo === 'INDIVIDUO') {
+          // Guardar el ID de la solicitud para usar en el proceso
+          localStorage.setItem('currentSolicitudId', response.id);
+          history.push('/apertura/individuo/datos-principales');
+        } else if (tipo === 'EMPRESA') {
+          // TODO: Implementar navegación para empresa
+          console.log('Navegación para empresa pendiente');
+        }
+      } else {
+        console.error('Error al crear solicitud:', response);
+        // TODO: Mostrar mensaje de error al usuario
+      }
+    } catch (error) {
+      console.error('Error al crear solicitud:', error);
+      // TODO: Mostrar mensaje de error al usuario
+    }
   };
 
   const handleContinuarSolicitud = (solicitud) => {
