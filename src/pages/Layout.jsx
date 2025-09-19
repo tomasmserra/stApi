@@ -48,7 +48,7 @@ const Layout = props => {
             <ThemeProvider theme={theme}>
             <CssBaseline />
             <Router>
-              <HeaderBar loggedIn={loggedIn}></HeaderBar>
+              <HeaderBar loggedIn={loggedIn} evaluarSesion={evaluarSesion}></HeaderBar>
               <Container className="pb-4">
                   <Switch>
                     <Route exact path="/" component={RegisterPage}></Route>

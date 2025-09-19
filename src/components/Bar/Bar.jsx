@@ -8,8 +8,9 @@ import useScrollTrigger from "@material-ui/core/useScrollTrigger"
 import { Button } from "@material-ui/core"
 import logo from '../../images/logo.png'
 import Slide from "@material-ui/core/Slide"
-import { Link } from "react-router-dom"
+import { Link, useHistory } from "react-router-dom"
 import { MobileButtons } from "../elements"
+import { authenticationService } from "../../services"
   
 function HideOnScroll(props) {
   const { children, window } = props
@@ -35,6 +36,22 @@ HideOnScroll.propTypes = {
 }
 
 export default function HeaderBar(props) {
+  const history = useHistory();
+
+  const handleAbrirCuenta = () => {
+    // Si hay una sesión activa, cerrarla
+    const token = localStorage.getItem('token');
+    if (token && authenticationService.checkSessionValidity()) {
+      authenticationService.logout();
+      // Actualizar el estado de loggedIn en el componente padre
+      if (props.evaluarSesion) {
+        props.evaluarSesion();
+      }
+    }
+    // Ir al inicio
+    history.push('/');
+  };
+
   return (
     <React.Fragment>
       <CssBaseline />
@@ -49,18 +66,27 @@ export default function HeaderBar(props) {
                   </Link>
                 </Col>
                 <Col className="my-auto text-right" xs={10}>
+                  <Button 
+                    className="btn-deal ml-2" 
+                    style={{ minHeight: '36px', padding: '6px 16px' }}
+                    onClick={handleAbrirCuenta}
+                  >
+                    ABRIR CUENTA
+                  </Button>
                   <a
                     href={"/"}
                     rel="noreferrer"
                   >
-                    <Button className="btn-deal ml-2">Abrir Cuenta</Button>
+                    <Button variant="outlined" color="primary" className="ml-2 btn-deal-light" style={{ minHeight: '36px', padding: '6px 16px' }}>
+                      Ingresar
+                    </Button>
                   </a>
                   <a
                     href={"https://anima.stsecurities.com.ar"}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Button className="btn-deal btn-deal-blue ml-2">Operar</Button>
+                    <Button className="btn-deal btn-deal-blue ml-2" style={{ minHeight: '36px', padding: '6px 16px' }}>OPERAR</Button>
                   </a>
                 </Col>
               </Row>

@@ -8,6 +8,7 @@ export const authenticationService = {
     sendVerificationCode,
     validateCode,
     validarRegistro,
+    getSolicitudesUsuario,
     logout,
     isSessionExpired,
     checkSessionValidity,
@@ -143,6 +144,29 @@ function checkSessionValidity() {
         return false;
     }
     return true;
+}
+
+async function getSolicitudesUsuario(idUsuario) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/solicitudes/usuario/${idUsuario}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
 }
 
 function logout() {

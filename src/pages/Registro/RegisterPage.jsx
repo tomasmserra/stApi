@@ -2,6 +2,7 @@ import React, {useEffect} from 'react'
 import PropTypes from 'prop-types'
 import RegisterBox from '../../components/RegisterBox'
 import { useHistory } from "react-router-dom";
+import { Container, Row, Col } from 'react-bootstrap';
 
 const RegisterPage = props => {
   let history = useHistory();
@@ -18,9 +19,13 @@ const RegisterPage = props => {
     }, [history])
 
     return (
-      <>
-        <RegisterBox></RegisterBox>
-      </>
+      <Container fluid style={{ minHeight: 'calc(100vh - 200px)', paddingTop: '4rem', paddingBottom: '4rem' }}>
+        <Row className="justify-content-center align-items-center" style={{ minHeight: '100%' }}>
+          <Col xs={12}>
+            <RegisterBox></RegisterBox>
+          </Col>
+        </Row>
+      </Container>
     )
 }
 

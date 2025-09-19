@@ -50,7 +50,7 @@ const RegisterBox = props => {
   }
 
   return (
-      <Col xs={12} md={{ span: 6, offset: 3 }}>
+      <Col xs={12} md={{ span: 6, offset: 3 }} style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
         <div className="apertura-container">
           <div className="apertura-header">
             <Typography variant="h5" style={{ color: 'white', fontWeight: 'bold' }}>
@@ -82,7 +82,7 @@ const RegisterBox = props => {
                     <Row>
                       <Col className="pt-3 pb-3">
                         <Button
-                          style={{ backgroundColor: 'var(--main-green)', color: '#fff' }}
+                          style={{ backgroundColor: 'var(--main-green)', color: '#fff' , width: '50%'}}
                           type="submit"
                           variant="contained"
                           fullWidth
