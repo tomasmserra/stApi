@@ -5,21 +5,15 @@ import { Footer } from '../components/Footer'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { Container, Col, Row } from 'react-bootstrap'
-import GraciasPorRegistrartePage from './Registro/GraciasPorRegistrartePage'
-import RegistroFinalizadoPage from './Registro/RegistroFinalizadoPage'
-import Login from './Login/LoginPage'
 import NotFound from './NotFoundPage'
 import RegisterPage from './Registro/RegisterPage'
-import Apertura from './Apertura/AperturaPage'
-import PDFPage from './Apertura/PDFPage'
 import TipoAperturaPage from './Apertura/TipoAperturaPage'
+import ValidarCodigoPage from './ValidarCodigo/ValidarCodigoPage'
 import { CssBaseline } from '@material-ui/core';
 
 import { BrowserRouter as Router,
         Switch,
         Route } from 'react-router-dom'
-import AperturaPersonaJuridicaPage from './Apertura/AperturaPersonaJuridicaPage';
-import ValidarCodigoPage from './ValidarCodigo/ValidarCodigoPage';
 import { authenticationService } from '../services';
 
 
@@ -58,30 +52,9 @@ const Layout = props => {
               <Container className="pb-4">
                   <Switch>
                     <Route exact path="/" component={RegisterPage}></Route>
-                    <Route exact path="/pdf" component={PDFPage}></Route>
-                    <Route exact path="/gracias-por-registrarte/:email" name="gracias" component={GraciasPorRegistrartePage}></Route>
-                    <Route exact path="/registro-finalizado/:email/:token" component={RegistroFinalizadoPage}></Route>
                     <Route exact path="/validar-codigo/:email" component={ValidarCodigoPage}></Route>
-
-                    <Route exact path="/apertura/persona-juridica/:paso?">
-                        <Col>
-                          <AperturaPersonaJuridicaPage />
-                        </Col>
-                    </Route>
-                    <Route exact path="/apertura/:idApertura?/:paso?">
-                        <Col>
-                          <Apertura></Apertura>
-                        </Col>
-                    </Route>
-
                     <ProtectedRoute exact path="/tipo-apertura" component={TipoAperturaPage} />
                     
-                    <Route exact path="/login">
-                        <Col>
-                          <Login evaluarSesion={evaluarSesion}></Login>
-                        </Col>
-                    </Route>
-
                     <Route>
                       <Col>
                         <NotFound></NotFound>

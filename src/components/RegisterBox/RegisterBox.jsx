@@ -1,12 +1,8 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
-import { Divider, Typography, CircularProgress , Box } from '@material-ui/core';
-import { Field, Form, FormSpy } from 'react-final-form';
-import RFTextField from './../../modules/form/RFTextField';
-import FormButton from './../../modules/form/FormButton';
+import { Typography, CircularProgress, TextField, Button } from '@material-ui/core';
 import { Container, Col, Row } from 'react-bootstrap'
 import { authenticationService } from './../../services';
-import { Link } from 'react-router-dom'
 import { useHistory } from "react-router-dom";
 import './style.css'
 
@@ -17,21 +13,23 @@ const RegisterBox = props => {
 
   let history = useHistory();
   const [spinnerVisibility, setSpinnerVisibility] = useState(HIDE);
-  const [message, setMessage] = useState("")
+  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
 
-  const onSubmit = async values => {
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setSpinnerVisibility(SHOW)
     setMessage("")
     
     // Enviar código de verificación por email
-    authenticationService.sendVerificationCode(values.correoElectronico)
+    authenticationService.sendVerificationCode(email)
         .then(
             response => {
                 console.log('Respuesta del backend:', response);
                 // Si la respuesta es exitosa (200), redirigir independientemente del formato
                 if (response && (response.exitosa === true || response.status === 200 || response.ok === true)) {
                   // Redirigir a la pantalla de validación de código
-                  history.push('/validar-codigo/' + values.correoElectronico)
+                  history.push('/validar-codigo/' + email)
                 }
                 else {
                   console.log('Error en la respuesta:', response);
@@ -68,40 +66,37 @@ const RegisterBox = props => {
             </Typography>
           <Container spacing={2}>
                 <Col className="text-center">
-                  <Form
-                  onSubmit={onSubmit}
-                  render={({ handleSubmit, form, submitting, pristine, values }) => (
-                  <form onSubmit={handleSubmit}>
-                              <Field
-                                autoComplete="email"
-                                component={RFTextField}
-                                fullWidth
-                                label="Email"
-                                margin="normal"
-                                name="correoElectronico"
-                                required
-                                variant="outlined"
-                                />
-                              <Row>
-                                <Col className="pt-3 pb-3">
-                                  <FormButton
-                                    style={{ backgroundColor: 'var(--main-green)', color: '#fff' }}
-                                    type="submit"
-                                  >
-                                    Iniciar 
-                                  </FormButton>
-                                </Col>
-                              </Row>                       
-                              <Row className={spinnerVisibility}>
-                                <Col>
-                                  <CircularProgress color="secondary" />
-                                </Col>
-                              </Row>
-                            
-                      {/* https://final-form.org/docs/react-final-form/examples/simple */}
+                  <form onSubmit={onSubmit}>
+                    <TextField
+                      autoComplete="email"
+                      fullWidth
+                      label="Email"
+                      margin="normal"
+                      name="email"
+                      required
+                      variant="outlined"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      type="email"
+                    />
+                    <Row>
+                      <Col className="pt-3 pb-3">
+                        <Button
+                          style={{ backgroundColor: 'var(--main-green)', color: '#fff' }}
+                          type="submit"
+                          variant="contained"
+                          fullWidth
+                        >
+                          Iniciar 
+                        </Button>
+                      </Col>
+                    </Row>                       
+                    <Row className={spinnerVisibility}>
+                      <Col>
+                        <CircularProgress color="secondary" />
+                      </Col>
+                    </Row>
                   </form>
-                  )}
-                  />
                   <Typography variant="h6">{message}</Typography>
                 </Col>
           </Container>

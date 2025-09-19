@@ -8,8 +8,6 @@ import useScrollTrigger from "@material-ui/core/useScrollTrigger"
 import { Button } from "@material-ui/core"
 import logo from '../../images/logo.png'
 import Slide from "@material-ui/core/Slide"
-import ButtonHeader from "../elements/ButtonHeader"
-import menuMock from "../../__mocks__/menu"
 import { Link } from "react-router-dom"
 import { MobileButtons } from "../elements"
   
@@ -51,31 +49,11 @@ export default function HeaderBar(props) {
                   </Link>
                 </Col>
                 <Col className="my-auto text-right" xs={10}>
-                  {menuMock.map((x) => {
-                    if (x.link)
-                      return (
-                        <Link to={x.link} className="inline">
-                          <ButtonHeader title={x.title} subItems={x.subItems} />
-                        </Link>
-                      )
-                    else
-                      return (
-                        <ButtonHeader title={x.title} subItems={x.subItems} />
-                      )
-                  })}
                   <a
-                    href={"/apertura"}
+                    href={"/"}
                     rel="noreferrer"
                   >
                     <Button className="btn-deal ml-2">Abrir Cuenta</Button>
-                  </a>
-                  <a
-                    href={"/login"}
-                    rel="noreferrer"
-                  >
-                    <Button variant="outlined" color="primary" className="ml-2 btn-deal-light">
-                      Ingresar
-                    </Button>
                   </a>
                   <a
                     href={"https://anima.stsecurities.com.ar"}
