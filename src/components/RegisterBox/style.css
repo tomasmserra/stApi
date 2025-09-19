@@ -1,0 +1,16 @@
+.header-box{
+    background-color: #EFEFEF;
+}
+
+.MuiButton-contained.btn-deal-success,
+.btn-deal-success{
+    background-color: #39B54A;
+    color: #FFF;
+    padding: 6px 40px;
+}
+
+.MuiButton-contained.btn-deal-success:hover,
+.btn-deal-success:hover{
+    background-color: #39B54A;
+    color: #FFF;
+}

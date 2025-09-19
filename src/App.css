@@ -1,0 +1,57 @@
+:root {
+    --verde: #39B54A;
+}
+
+.MuiButton-contained.btn-deal-success,
+.MuiButton-root.btn-deal-success,   
+.btn-deal-success{
+    background-color: var(--verde);
+    color: #FFF;
+    padding: 6px 40px;
+}
+
+.MuiButton-contained.btn-deal-success:hover,
+.MuiButton-root.btn-deal-success:hover,
+.btn-deal-success:hover{
+    background-color: var(--verde);
+    color: #FFF;
+}
+
+.MuiButtonBase-root.btn-deal-outlined-success{
+    border: 1px solid var(--verde);
+    color:var(--verde);
+}
+
+.fs-8 { font-size: 8px;}
+.fs-9 { font-size: 9px;}
+.fs-10 { font-size: 10px;}
+.fs-11 { font-size: 11px;}
+.fs-12 { font-size: 12px;}
+.fs-13 { font-size: 13px;}
+.fs-14 { font-size: 14px;}
+.fs-15 { font-size: 15px;}
+.fs-16 { font-size: 16px;}
+.fs-17 { font-size: 17px;}
+.fs-18 { font-size: 18px;}
+.fs-19 { font-size: 19px;}
+
+.mb-6 {
+    margin-bottom: 6rem!important;
+}
+
+.mt-6 {
+    margin-top: 6rem!important;
+}
+.mb-7 {
+    margin-bottom: 7rem!important;
+}
+
+.mt-7 {
+    margin-top: 7rem!important;
+}
+
+@media print {
+    .pageBreak {
+      page-break-before: always;
+    }
+  }
