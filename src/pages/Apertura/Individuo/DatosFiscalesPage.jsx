@@ -138,10 +138,10 @@ const DatosFiscalesPage = () => {
       
       const response = await authenticationService.saveDatosFiscalesIndividuo(datosParaGuardar);
       
-      if (response && (response.status === 200 || response.ok)) {
-        console.log('Datos fiscales guardados exitosamente:', response);
-        history.push('/apertura/individuo/resumen');
-      } else {
+          if (response && (response.status === 200 || response.ok)) {
+            console.log('Datos fiscales guardados exitosamente:', response);
+            history.push('/apertura/individuo/datos-fiscales-exterior');
+          } else {
         console.error('Error al guardar datos fiscales:', response);
         setError('Error al guardar los datos fiscales. Intente nuevamente.');
         setLoading(false);
@@ -277,16 +277,16 @@ const DatosFiscalesPage = () => {
                 </Grid>
               </Grid>
               
-              <Box display="flex" gap={2} justifyContent="center" style={{ marginTop: '2rem' }}>
+              <Box display="flex" justifyContent="center" className="navigation-buttons" style={{ marginTop: '2rem' }}>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBack />}
                   onClick={handleVolver}
                   disabled={loading}
+                  className="navigation-button"
                   style={{
                     borderColor: 'var(--main-green)',
-                    color: 'var(--main-green)',
-                    padding: '12px 24px'
+                    color: 'var(--main-green)'
                   }}
                 >
                   Volver
@@ -295,10 +295,10 @@ const DatosFiscalesPage = () => {
                   type="submit"
                   variant="contained"
                   disabled={loading || !isFormValid()}
+                  className="navigation-button"
                   style={{
                     backgroundColor: isFormValid() ? 'var(--main-green)' : '#ccc',
-                    color: '#fff',
-                    padding: '12px 24px'
+                    color: '#fff'
                   }}
                 >
                   {loading ? <CircularProgress size={20} color="inherit" /> : 'Continuar'}

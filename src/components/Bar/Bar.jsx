@@ -62,43 +62,43 @@ export default function HeaderBar(props) {
               <Row className="header d-none d-lg-flex">
                 <Col xs={2} className="my-auto">
                   <Link to="/">
-                    <img src={logo} alt="" className="p-1 w-100" />
+                    <img src={logo} alt="" className="p-1" style={{ height: '50px', width: 'auto' }} />
                   </Link>
                 </Col>
                 <Col className="my-auto text-right" xs={10}>
-                  <Button 
-                    className="btn-deal ml-2" 
-                    style={{ minHeight: '32px', padding: '6px 12px' }}
-                    onClick={handleAbrirCuenta}
-                  >
-                    ABRIR CUENTA
-                  </Button>
-                  <a
-                    href={"/"}
-                    rel="noreferrer"
-                  >
-                    <Button variant="outlined" color="primary" className="ml-2 btn-deal-light" style={{ minHeight: '32px', padding: '6px 12px' }}>
-                      Ingresar
-                    </Button>
-                  </a>
-                  <a
-                    href={"https://anima.stsecurities.com.ar"}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Button className="btn-deal btn-deal-blue ml-2" style={{ minHeight: '32px', padding: '6px 12px' }}>OPERAR</Button>
-                  </a>
+                      <Button 
+                        className="btn-deal ml-2" 
+                        style={{ minHeight: '36px', padding: '8px 16px', fontSize: '13px' }}
+                        onClick={handleAbrirCuenta}
+                      >
+                        ABRIR CUENTA
+                      </Button>
+                      <a
+                        href={"/"}
+                        rel="noreferrer"
+                      >
+                        <Button variant="outlined" color="primary" className="ml-2 btn-deal-light" style={{ minHeight: '36px', padding: '8px 16px', fontSize: '13px' }}>
+                          Ingresar
+                        </Button>
+                      </a>
+                      <a
+                        href={"https://anima.stsecurities.com.ar"}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Button className="btn-deal btn-deal-blue ml-2" style={{ minHeight: '36px', padding: '8px 16px', fontSize: '13px' }}>OPERAR</Button>
+                      </a>
                 </Col>
               </Row>
-              <Row className="header d-lg-none">
-                <Col className="my-auto">
-                  <img
-                    src={logo}
-                    alt="logo"
-                    className="p-1"
-                    style={{ height: "70px" }}
-                  />
-                </Col>
+                  <Row className="header d-lg-none">
+                    <Col className="my-auto">
+                      <img
+                        src={logo}
+                        alt="logo"
+                        className="p-1"
+                        style={{ height: "60px", width: "auto" }}
+                      />
+                    </Col>
                 <Col className="my-auto text-right">
                   <MobileButtons />
                 </Col>

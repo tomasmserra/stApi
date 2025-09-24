@@ -735,12 +735,12 @@ const DatosPersonalesPage = () => {
 
                 {/* Botones */}
                 <Grid item xs={12} style={{ marginTop: '2rem' }}>
-                  <Box display="flex" justifyContent="center" gap="1rem">
+                  <Box display="flex" justifyContent="center" className="navigation-buttons">
                     <Button
                       variant="outlined"
                       startIcon={<ArrowBack />}
                       onClick={() => history.push('/apertura/individuo/datos-principales')}
-                      style={{ minWidth: '120px' }}
+                      className="navigation-button"
                     >
                       Volver
                     </Button>
@@ -749,10 +749,10 @@ const DatosPersonalesPage = () => {
                       type="submit"
                       variant="contained"
                       disabled={loading || !isFormValid()}
+                      className="navigation-button"
                       style={{
                         backgroundColor: isFormValid() ? 'var(--main-green)' : '#ccc',
-                        color: 'white',
-                        minWidth: '120px'
+                        color: 'white'
                       }}
                     >
                       {loading ? <CircularProgress size={20} color="inherit" /> : 'Continuar'}

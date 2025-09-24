@@ -13,6 +13,7 @@ import DatosPrincipalesPage from './Apertura/Individuo/DatosPrincipalesPage'
 import DatosPersonalesPage from './Apertura/Individuo/DatosPersonalesPage'
 import DomicilioPage from './Apertura/Individuo/DomicilioPage'
 import DatosFiscalesPage from './Apertura/Individuo/DatosFiscalesPage'
+import DatosFiscalesExteriorPage from './Apertura/Individuo/DatosFiscalesExteriorPage'
 import { CssBaseline } from '@material-ui/core';
 
 import { BrowserRouter as Router,
@@ -62,6 +63,7 @@ const Layout = props => {
                         <ProtectedRoute exact path="/apertura/individuo/datos-personales" component={DatosPersonalesPage} />
                         <ProtectedRoute exact path="/apertura/individuo/domicilio" component={DomicilioPage} />
                         <ProtectedRoute exact path="/apertura/individuo/datos-fiscales" component={DatosFiscalesPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/datos-fiscales-exterior" component={DatosFiscalesExteriorPage} />
                     
                     <Route>
                       <Col>
