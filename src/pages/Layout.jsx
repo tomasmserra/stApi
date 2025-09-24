@@ -10,6 +10,9 @@ import RegisterPage from './Registro/RegisterPage'
 import TipoAperturaPage from './Apertura/TipoAperturaPage'
 import ValidarCodigoPage from './ValidarCodigo/ValidarCodigoPage'
 import DatosPrincipalesPage from './Apertura/Individuo/DatosPrincipalesPage'
+import DatosPersonalesPage from './Apertura/Individuo/DatosPersonalesPage'
+import DomicilioPage from './Apertura/Individuo/DomicilioPage'
+import DatosFiscalesPage from './Apertura/Individuo/DatosFiscalesPage'
 import { CssBaseline } from '@material-ui/core';
 
 import { BrowserRouter as Router,
@@ -55,7 +58,10 @@ const Layout = props => {
                     <Route exact path="/" component={RegisterPage}></Route>
                     <Route exact path="/validar-codigo/:email" component={ValidarCodigoPage}></Route>
                     <ProtectedRoute exact path="/tipo-apertura" component={TipoAperturaPage} />
-                    <ProtectedRoute exact path="/apertura/individuo/datos-principales" component={DatosPrincipalesPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/datos-principales" component={DatosPrincipalesPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/datos-personales" component={DatosPersonalesPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/domicilio" component={DomicilioPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/datos-fiscales" component={DatosFiscalesPage} />
                     
                     <Route>
                       <Col>

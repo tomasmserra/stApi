@@ -53,15 +53,15 @@ const RegisterBox = props => {
       <Col xs={12} md={{ span: 6, offset: 3 }} style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
         <div className="apertura-container">
           <div className="apertura-header">
-            <Typography variant="h5" style={{ color: 'white', fontWeight: 'bold' }}>
+            <Typography variant="h6" style={{ color: 'white', fontWeight: 'bold' }}>
               Apertura de cuenta
             </Typography>
           </div>
           <div className="apertura-content">
-            <Typography variant="h4" paragraph={true} style={{ fontWeight: 'bold', color: '#333', marginBottom: '15px' }}>
-              ¡Comencemos!
-            </Typography>
-            <Typography variant="body1" style={{ color: '#333', marginBottom: '7px' }}>
+                <Typography variant="h6" paragraph={true} style={{ fontWeight: 'bold', color: '#333', marginBottom: '15px' }}>
+                  ¡Comencemos!
+                </Typography>
+            <Typography variant="body2" style={{ color: '#333', marginBottom: '7px' }}>
               Ingresá tu correo para iniciar o continuar la apertura de la cuenta
             </Typography>
           <Container spacing={2}>
@@ -97,7 +97,7 @@ const RegisterBox = props => {
                       </Col>
                     </Row>
                   </form>
-                  <Typography variant="h6">{message}</Typography>
+                      <Typography variant="body2">{message}</Typography>
                 </Col>
           </Container>
           </div>

@@ -108,7 +108,7 @@ h1, h2, h3, h4, h5, p, span, input, textarea, ul, li, table {
 .MuiButton-text.btn-deal {
   font-weight: 600;
   font-family: "Inter";
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .MuiButton-text.btn-deal.btn-deal-blue, .MuiButton-text.btn-deal.btn-deal-blue:hover {
@@ -190,11 +190,16 @@ div.transparent {
 .deal-footer ul {
   list-style: none;
   padding: 0;
+  font-size: 12px;
+}
+
+.deal-footer ul li {
+  font-size: 12px;
 }
 
 .deal-footer h5 {
   font-weight: 600;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .deal-footer img {
@@ -216,8 +221,8 @@ div.transparent {
 .btn-deal {
   text-transform: none !important;
   font-weight: 600 !important;
-  font-size: 13px !important;
-  padding: 8px 16px !important;
+  font-size: 11px !important;
+  padding: 6px 12px !important;
   border-radius: 4px !important;
 }
 
@@ -225,6 +230,8 @@ div.transparent {
   border-color: #ccc !important;
   color: #333 !important;
   background-color: #fff !important;
+  padding: 4px 12px !important;
+  min-height: 32px !important;
 }
 
 .btn-deal-light:hover {

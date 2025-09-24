@@ -68,7 +68,7 @@ export default function HeaderBar(props) {
                 <Col className="my-auto text-right" xs={10}>
                   <Button 
                     className="btn-deal ml-2" 
-                    style={{ minHeight: '36px', padding: '6px 16px' }}
+                    style={{ minHeight: '32px', padding: '6px 12px' }}
                     onClick={handleAbrirCuenta}
                   >
                     ABRIR CUENTA
@@ -77,7 +77,7 @@ export default function HeaderBar(props) {
                     href={"/"}
                     rel="noreferrer"
                   >
-                    <Button variant="outlined" color="primary" className="ml-2 btn-deal-light" style={{ minHeight: '36px', padding: '6px 16px' }}>
+                    <Button variant="outlined" color="primary" className="ml-2 btn-deal-light" style={{ minHeight: '32px', padding: '6px 12px' }}>
                       Ingresar
                     </Button>
                   </a>
@@ -86,7 +86,7 @@ export default function HeaderBar(props) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Button className="btn-deal btn-deal-blue ml-2" style={{ minHeight: '36px', padding: '6px 16px' }}>OPERAR</Button>
+                    <Button className="btn-deal btn-deal-blue ml-2" style={{ minHeight: '32px', padding: '6px 12px' }}>OPERAR</Button>
                   </a>
                 </Col>
               </Row>

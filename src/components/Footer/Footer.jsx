@@ -13,8 +13,8 @@ export const DealFooter = () => {
           <Row className="pt-5 pb-5">
             <Col xs={12} sm={6} md={3}>
               <img src={logo} alt="logo" className="mb-3" />
-              <Typography variant="h2" style={{ fontSize: '12px', paddingBottom: '10px'}}>Sede social: Tte. Gral. Juan Domingo Perón 646 piso 4, C1038AAN, CABA</Typography>
-              <Typography variant="h2" style={{ fontSize: '12px'}}>Sede operativa: Carlos Pellegrini 989 piso 10, C1009ABS,CABA</Typography>
+              <Typography variant="body2" style={{ fontSize: '11px', paddingBottom: '10px'}}>Sede social: Tte. Gral. Juan Domingo Perón 646 piso 4, C1038AAN, CABA</Typography>
+              <Typography variant="body2" style={{ fontSize: '11px'}}>Sede operativa: Carlos Pellegrini 989 piso 10, C1009ABS,CABA</Typography>
             </Col>
       
             <Col xs={12} sm={6} md={3}>
@@ -59,7 +59,7 @@ export const DealFooter = () => {
                     <LinkedinIcon />
                 </a>
             </Col>
-            <Typography variant="h2" style={{ fontSize: '10px' }}>
+            <Typography variant="body2" style={{ fontSize: '9px' }}>
             ST SECURITIES S.A.U. es un Agente de Liquidación y Compensación y Agente de Negociación Propio registrado bajo el número 524, Agente de Colocación y Distribución Integral de Fondos Comunes de Inversión registrado bajo el número 133 ACyDI y Agente de Colocación y Distribución de Fondos Comunes de Inversión registrado bajo el número 62 ACyD ante la Comisión Nacional de Valores. Miembro de Bolsas y Mercados Argentinos S.A (BYMA), dl Mercado Argentino de Valores (MAV), del Mercado Abierto Electrónico (MAE) y A3 (ex Matba Rofex).
             </Typography>
           </Row>

@@ -12,6 +12,13 @@ export const authenticationService = {
     crearSolicitud,
     getDatosPrincipalesIndividuo,
     saveDatosPrincipalesIndividuo,
+    getDatosPersonalesIndividuo,
+    saveDatosPersonalesIndividuo,
+    getDomicilioIndividuo,
+    saveDomicilioIndividuo,
+    getDatosFiscalesIndividuo,
+    saveDatosFiscalesIndividuo,
+    getArchivo,
     logout,
     isSessionExpired,
     checkSessionValidity,
@@ -194,7 +201,7 @@ async function crearSolicitud(tipo, idUsuarioCargo) {
     return result;
 }
 
-async function getDatosPrincipalesIndividuo(idUsuario) {
+async function getDatosPrincipalesIndividuo(solicitudId) {
     const token = localStorage.getItem('token');
     const requestOptions = {
         method: 'GET',
@@ -205,7 +212,7 @@ async function getDatosPrincipalesIndividuo(idUsuario) {
     };
 
     const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
-    let url = `${ghostUrl}/api/individuo-apertura/datos-principales/${idUsuario}`;
+    let url = `${ghostUrl}/api/individuo-apertura/datos-principales/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
     const result = await response.json();
@@ -230,6 +237,186 @@ async function saveDatosPrincipalesIndividuo(datos) {
 
     const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
     let url = `${ghostUrl}/api/individuo-apertura/datos-principales/${datos.idUsuario}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function getDatosPersonalesIndividuo(solicitudId) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/datos-personales/${solicitudId}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function saveDatosPersonalesIndividuo(idUsuario, datos) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datos)
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/datos-personales/${idUsuario}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function getArchivo(archivoId) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/archivos/${archivoId}`;
+
+    const response = await fetch(url, requestOptions);
+    
+    if (response.ok) {
+        const result = await response.json();
+        
+        // Convertir archivoData (base64) a blob
+        const binaryString = atob(result.archivoData);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes]);
+        const fileUrl = URL.createObjectURL(blob);
+        
+        return {
+            status: response.status,
+            ok: response.ok,
+            url: fileUrl,
+            blob: blob,
+            filename: result.nombre
+        };
+    } else {
+        const result = await response.json();
+        result.status = response.status;
+        result.ok = response.ok;
+        return result;
+    }
+}
+
+async function getDomicilioIndividuo(solicitudId) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/domicilio/${solicitudId}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function saveDomicilioIndividuo(datos) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datos)
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/domicilio/${datos.idUsuario}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function getDatosFiscalesIndividuo(solicitudId) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/datos-fiscales/${solicitudId}`;
+
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    result.status = response.status;
+    result.ok = response.ok;
+
+    return result;
+}
+
+async function saveDatosFiscalesIndividuo(datos) {
+    const token = localStorage.getItem('token');
+    const requestOptions = {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': '*/*',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datos)
+    };
+
+    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    let url = `${ghostUrl}/api/individuo-apertura/datos-fiscales/${datos.idUsuario}`;
 
     const response = await fetch(url, requestOptions);
     const result = await response.json();

@@ -84,9 +84,12 @@ const TipoAperturaPage = () => {
           // Guardar el ID de la solicitud para usar en el proceso
           localStorage.setItem('currentSolicitudId', response.id);
           history.push('/apertura/individuo/datos-principales');
-        } else if (tipo === 'EMPRESA') {
-          // TODO: Implementar navegación para empresa
-          console.log('Navegación para empresa pendiente');
+        } else if (tipo === 'EMPRESA_CLASICA') {
+          // Guardar el ID de la solicitud para usar en el proceso
+          localStorage.setItem('currentSolicitudId', response.id);
+          history.push('/apertura/empresa/datos-principales');
+        } else {
+          console.log('Tipo de solicitud no reconocido:', tipo);
         }
       } else {
         console.error('Error al crear solicitud:', response);
@@ -99,8 +102,22 @@ const TipoAperturaPage = () => {
   };
 
   const handleContinuarSolicitud = (solicitud) => {
-    // TODO: Implementar navegación a continuación de solicitud existente
-    console.log('Continuar solicitud:', solicitud);
+    console.log('Continuando solicitud:', solicitud);
+    
+    // Guardar el ID de la solicitud para usar en el proceso
+    localStorage.setItem('currentSolicitudId', solicitud.id);
+    console.log('Guardado currentSolicitudId:', solicitud.id);
+    
+    // Navegar según el tipo de solicitud
+    if (solicitud.tipo === 'INDIVIDUO') {
+      console.log('Navegando a datos principales de individuo');
+      history.push('/apertura/individuo/datos-principales');
+    } else if (solicitud.tipo === 'EMPRESA_CLASICA') {
+      console.log('Navegando a datos principales de empresa');
+      history.push('/apertura/empresa/datos-principales');
+    } else {
+      console.log('Tipo de solicitud no reconocido:', solicitud.tipo);
+    }
   };
 
   return (
@@ -231,7 +248,7 @@ const TipoAperturaPage = () => {
                 fontSize: '16px',
                 fontWeight: 'bold'
               }}
-              onClick={() => handleNuevaSolicitud('EMPRESA')}
+              onClick={() => handleNuevaSolicitud('EMPRESA_CLASICA')}
             >
               EMPRESA
             </Button>
