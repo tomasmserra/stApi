@@ -36,7 +36,8 @@ const DatosPersonalesPage = () => {
     actividad: '',
     sexo: 'MASCULINO',
     estadoCivil: 'SOLTERO',
-    dniArchivoId: null,
+    dniFrenteArchivoId: null,
+    dniReversoArchivoId: null,
     conyuge: {
       nombres: '',
       apellidos: '',
@@ -72,6 +73,7 @@ const DatosPersonalesPage = () => {
       console.log('currentSolicitudId:', currentSolicitudId);
       
       if (currentSolicitudId) {
+        setUploadedFiles([]);
         const response = await authenticationService.getDatosPersonalesIndividuo(currentSolicitudId);
         console.log('Respuesta del backend datos personales:', response);
         
@@ -79,19 +81,34 @@ const DatosPersonalesPage = () => {
           // Los datos están directamente en la respuesta, no en response.data
           if (response.tipoID || response.idNumero || response.fechaNacimiento) {
             console.log('Cargando datos personales en el formulario:', response);
-            setFormData({
-              ...formData,
-              ...response,
-              conyuge: {
-                ...formData.conyuge,
-                ...response.conyuge
-              }
-            });
+            const {
+              conyuge: conyugeResponse,
+              dniFrenteArchivoId,
+              dniReversoArchivoId,
+              status,
+              ok,
+              ...restoDatos
+            } = response;
 
-            // Si hay un dniArchivoId, cargar el archivo
-            if (response.dniArchivoId) {
-              console.log('Cargando archivo DNI con ID:', response.dniArchivoId);
-              cargarArchivoDNI(response.dniArchivoId);
+            setFormData(prev => ({
+              ...prev,
+              ...restoDatos,
+              dniFrenteArchivoId: dniFrenteArchivoId || null,
+              dniReversoArchivoId: dniReversoArchivoId || null,
+              conyuge: {
+                ...prev.conyuge,
+                ...(conyugeResponse || {})
+              }
+            }));
+
+            if (response.dniFrenteArchivoId) {
+              console.log('Cargando archivo DNI frente con ID:', response.dniFrenteArchivoId);
+              cargarArchivoDNI(response.dniFrenteArchivoId, 'frente');
+            }
+
+            if (response.dniReversoArchivoId) {
+              console.log('Cargando archivo DNI reverso con ID:', response.dniReversoArchivoId);
+              cargarArchivoDNI(response.dniReversoArchivoId, 'reverso');
             }
           } else {
             console.log('No hay datos personales existentes para cargar');
@@ -110,7 +127,7 @@ const DatosPersonalesPage = () => {
     }
   };
 
-  const cargarArchivoDNI = async (archivoId) => {
+  const cargarArchivoDNI = async (archivoId, side) => {
     try {
       console.log('Obteniendo archivo con ID:', archivoId);
       const response = await authenticationService.getArchivo(archivoId);
@@ -125,11 +142,16 @@ const DatosPersonalesPage = () => {
           name: response.filename || 'DNI.pdf',
           size: response.blob.size,
           type: response.blob.type,
-          url: response.url
+          url: response.url,
+          side
         };
         
-        setUploadedFiles([archivoExistente]);
-        console.log('Archivo agregado a uploadedFiles:', archivoExistente);
+        setUploadedFiles(prev => {
+          const filtered = prev.filter(file => file.side !== side);
+          const updated = [...filtered, archivoExistente];
+          console.log('Archivo agregado a uploadedFiles:', archivoExistente);
+          return updated;
+        });
       } else {
         console.error('Error al cargar el archivo:', response);
       }
@@ -216,7 +238,7 @@ const DatosPersonalesPage = () => {
     const sinErrores = !fechaNacimientoError;
     
     // Verificar que se haya subido al menos un archivo DNI
-    const archivoSubido = formData.dniArchivoId !== null;
+    const archivoSubido = formData.dniFrenteArchivoId !== null;
     
     // Si está casado, validar también los campos del cónyuge
     let conyugeValido = true;
@@ -239,20 +261,40 @@ const DatosPersonalesPage = () => {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
 
+    const availableSides = [];
+    if (!formData.dniFrenteArchivoId) availableSides.push('frente');
+    if (!formData.dniReversoArchivoId) availableSides.push('reverso');
+
+    if (availableSides.length === 0) {
+      setError('Ya cargaste el frente y dorso del DNI. Eliminá un archivo para volver a subir.');
+      event.target.value = null;
+      return;
+    }
+
+    const filesToUpload = files.slice(0, availableSides.length);
+
+    if (filesToUpload.length < files.length) {
+      setError('Solo podés subir hasta dos archivos (frente y dorso). Se tomarán los primeros archivos seleccionados.');
+    }
+
     setUploadingFiles(true);
     try {
-      const uploadPromises = files.map(async (file) => {
-        const formData = new FormData();
-        formData.append('file', file);
+      const uploadedResults = [];
+
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        const side = availableSides[i];
+
+        const uploadData = new FormData();
+        uploadData.append('file', file);
         
-        // Usar la URL del Ghost para la subida de archivos
         const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
         const response = await fetch(`${ghostUrl}/api/archivos/upload`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
-          body: formData
+          body: uploadData
         });
 
         if (!response.ok) {
@@ -260,40 +302,69 @@ const DatosPersonalesPage = () => {
         }
 
         const result = await response.json();
-        return {
-          id: result.id || result.dniArchivoId,
+        const fileId = result.id || result.dniArchivoId || result.archivoId;
+
+        if (!fileId) {
+          throw new Error('No se pudo obtener el ID del archivo subido');
+        }
+
+        uploadedResults.push({
+          id: fileId,
           name: file.name,
           size: file.size,
-          type: file.type
-        };
+          type: file.type,
+          side
+        });
+      }
+
+      setFormData(prev => {
+        const newData = { ...prev };
+        uploadedResults.forEach(result => {
+          if (result.side === 'frente') {
+            newData.dniFrenteArchivoId = result.id;
+          } else if (result.side === 'reverso') {
+            newData.dniReversoArchivoId = result.id;
+          }
+        });
+        return newData;
       });
 
-      const uploadedResults = await Promise.all(uploadPromises);
-      setUploadedFiles(prev => [...prev, ...uploadedResults]);
-      
-      // Si solo hay un archivo, asignarlo al dniArchivoId
-      if (uploadedResults.length === 1) {
-        setFormData(prev => ({
-          ...prev,
-          dniArchivoId: uploadedResults[0].id
-        }));
-      }
+      setUploadedFiles(prev => {
+        let updated = [...prev];
+        uploadedResults.forEach(result => {
+          updated = updated.filter(file => file.side !== result.side);
+          updated.push(result);
+        });
+        return updated;
+      });
+
+      setError(prev => {
+        if (!prev) return prev;
+        const lower = prev.toLowerCase();
+        if (lower.includes('archivo') || lower.includes('dni')) {
+          return '';
+        }
+        return prev;
+      });
     } catch (err) {
       console.error('Error uploading files:', err);
       setError('Error al subir los archivos');
     } finally {
       setUploadingFiles(false);
+      event.target.value = null;
     }
   };
 
   const removeFile = (fileId) => {
+    const fileToRemove = uploadedFiles.find(file => file.id === fileId);
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
     
-    // Solo limpiar el dniArchivoId si se está eliminando el archivo actual
-    if (formData.dniArchivoId === fileId) {
+    if (fileToRemove) {
       setFormData(prev => ({
         ...prev,
-        dniArchivoId: null
+        ...(fileToRemove.side === 'frente'
+          ? { dniFrenteArchivoId: null }
+          : { dniReversoArchivoId: null })
       }));
     }
   };
@@ -301,8 +372,8 @@ const DatosPersonalesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.dniArchivoId) {
-      setError('Debe subir al menos un archivo DNI');
+    if (!formData.dniFrenteArchivoId) {
+      setError('Debe subir al menos el frente del DNI');
       return;
     }
 
@@ -316,7 +387,6 @@ const DatosPersonalesPage = () => {
       setLoading(true);
       setError('');
       
-      const currentUser = authenticationService.currentUserValue;
       const currentSolicitudId = localStorage.getItem('currentSolicitudId');
       
       const dataToSave = {
@@ -324,7 +394,7 @@ const DatosPersonalesPage = () => {
         solicitudId: parseInt(currentSolicitudId)
       };
 
-      const response = await authenticationService.saveDatosPersonalesIndividuo(currentUser.id, dataToSave);
+      const response = await authenticationService.saveDatosPersonalesIndividuo(dataToSave);
       
       if (response && (response.status === 200 || response.ok)) {
         // Redirigir a la siguiente pantalla
@@ -618,11 +688,11 @@ const DatosPersonalesPage = () => {
                         border: '2px dashed #ccc'
                       }}
                     >
-                      {uploadingFiles ? 'Subiendo...' : 'Subir DNI (Puede subir múltiples archivos)'}
+                      {uploadingFiles ? 'Subiendo...' : 'Subir DNI (Frente y dorso, máximo 2 archivos)'}
                     </Button>
                   </label>
                   <Typography variant="caption" display="block" style={{ marginTop: '0.5rem', color: '#666' }}>
-                    Formatos permitidos: JPG, PNG, PDF. En móvil se abrirá la cámara.
+                    Formatos permitidos: JPG, PNG, PDF. En móvil se abrirá la cámara. Si subís un solo archivo se tomará como frente.
                   </Typography>
                 </Grid>
 
@@ -632,15 +702,24 @@ const DatosPersonalesPage = () => {
                     <Typography variant="subtitle1" style={{ marginBottom: '0.5rem' }}>
                       Archivos subidos:
                     </Typography>
-                    {uploadedFiles.map((file) => (
-                      <Chip
-                        key={file.id}
-                        label={`${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`}
-                        onDelete={() => removeFile(file.id)}
-                        deleteIcon={<Delete />}
-                        style={{ margin: '0.25rem' }}
-                      />
-                    ))}
+                    {uploadedFiles
+                      .slice()
+                      .sort((a, b) => {
+                        const order = { frente: 0, reverso: 1 };
+                        return (order[a.side] || 0) - (order[b.side] || 0);
+                      })
+                      .map((file) => {
+                        const sideLabel = file.side === 'frente' ? 'Frente' : 'Reverso';
+                        return (
+                          <Chip
+                            key={`${file.side}-${file.id}`}
+                            label={`${sideLabel}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`}
+                            onDelete={() => removeFile(file.id)}
+                            deleteIcon={<Delete />}
+                            style={{ margin: '0.25rem' }}
+                          />
+                        );
+                      })}
                   </Grid>
                 )}
 

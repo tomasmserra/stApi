@@ -14,6 +14,13 @@ import DatosPersonalesPage from './Apertura/Individuo/DatosPersonalesPage'
 import DomicilioPage from './Apertura/Individuo/DomicilioPage'
 import DatosFiscalesPage from './Apertura/Individuo/DatosFiscalesPage'
 import DatosFiscalesExteriorPage from './Apertura/Individuo/DatosFiscalesExteriorPage'
+import CuentasBancariasPage from './Apertura/Individuo/CuentasBancariasPage'
+import CuentasBancariasExteriorPage from './Apertura/Individuo/CuentasBancariasExteriorPage'
+import DeclaracionesPage from './Apertura/Individuo/DeclaracionesPage'
+import PerfilInversorPage from './Apertura/Individuo/PerfilInversorPage'
+import DeclaracionIngresosPage from './Apertura/Individuo/DeclaracionIngresosPage'
+import TerminosCondicionesPage from './Apertura/Individuo/TerminosCondicionesPage'
+import DocumentoPdfPage from './Apertura/Individuo/DocumentoPdfPage'
 import { CssBaseline } from '@material-ui/core';
 
 import { BrowserRouter as Router,
@@ -64,6 +71,13 @@ const Layout = props => {
                         <ProtectedRoute exact path="/apertura/individuo/domicilio" component={DomicilioPage} />
                         <ProtectedRoute exact path="/apertura/individuo/datos-fiscales" component={DatosFiscalesPage} />
                         <ProtectedRoute exact path="/apertura/individuo/datos-fiscales-exterior" component={DatosFiscalesExteriorPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/cuentas-bancarias" component={CuentasBancariasPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/cuentas-bancarias-exterior" component={CuentasBancariasExteriorPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/declaraciones" component={DeclaracionesPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/perfil-inversor" component={PerfilInversorPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/declaracion-ingresos" component={DeclaracionIngresosPage} />
+                        <ProtectedRoute exact path="/apertura/individuo/terminos-condiciones" component={TerminosCondicionesPage} />
+                        <ProtectedRoute exact path="/apertura/documento/:documento" component={DocumentoPdfPage} />
                     
                     <Route>
                       <Col>
