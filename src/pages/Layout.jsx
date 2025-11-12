@@ -21,6 +21,8 @@ import PerfilInversorPage from './Apertura/Individuo/PerfilInversorPage'
 import DeclaracionIngresosPage from './Apertura/Individuo/DeclaracionIngresosPage'
 import TerminosCondicionesPage from './Apertura/Individuo/TerminosCondicionesPage'
 import DocumentoPdfPage from './Apertura/Individuo/DocumentoPdfPage'
+import CoTitularesPage from './Apertura/CoTitularesPage'
+import FinAperturaPage from './Apertura/FinAperturaPage'
 import { CssBaseline } from '@material-ui/core';
 
 import { BrowserRouter as Router,
@@ -77,6 +79,8 @@ const Layout = props => {
                         <ProtectedRoute exact path="/apertura/individuo/perfil-inversor" component={PerfilInversorPage} />
                         <ProtectedRoute exact path="/apertura/individuo/declaracion-ingresos" component={DeclaracionIngresosPage} />
                         <ProtectedRoute exact path="/apertura/individuo/terminos-condiciones" component={TerminosCondicionesPage} />
+                        <ProtectedRoute exact path="/apertura/cotitulares" component={CoTitularesPage} />
+                        <ProtectedRoute exact path="/apertura/fin" component={FinAperturaPage} />
                         <ProtectedRoute exact path="/apertura/documento/:documento" component={DocumentoPdfPage} />
                     
                     <Route>

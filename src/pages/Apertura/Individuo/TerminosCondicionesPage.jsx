@@ -85,12 +85,10 @@ const TerminosCondicionesPage = () => {
     formData.aceptaReglamentoGestionFondos &&
     formData.aceptaComisiones;
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
+  const guardarTerminos = async () => {
     if (!isFormValid()) {
       setError('Debes aceptar todas las condiciones para continuar.');
-      return;
+      return false;
     }
 
     try {
@@ -101,7 +99,7 @@ const TerminosCondicionesPage = () => {
       const currentSolicitudId = localStorage.getItem('currentSolicitudId');
       if (!currentSolicitudId) {
         setError('No se encontró la solicitud en curso.');
-        return;
+        return false;
       }
 
       const payload = {
@@ -115,14 +113,35 @@ const TerminosCondicionesPage = () => {
 
       if (response && (response.status === 200 || response.ok)) {
         setSuccessMessage('Términos y condiciones guardados correctamente.');
+        return true;
       } else {
         setError('Error al guardar términos y condiciones.');
+        return false;
       }
     } catch (err) {
       console.error('Error guardando términos y condiciones:', err);
       setError('Error al guardar términos y condiciones.');
+      return false;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVolver = () => {
+    history.push('/apertura/individuo/declaracion-ingresos');
+  };
+
+  const handleIrCotitulares = async () => {
+    const guardado = await guardarTerminos();
+    if (guardado) {
+      history.push('/apertura/cotitulares');
+    }
+  };
+
+  const handleIrFin = async () => {
+    const guardado = await guardarTerminos();
+    if (guardado) {
+      history.push('/apertura/fin');
     }
   };
 
@@ -176,7 +195,7 @@ const TerminosCondicionesPage = () => {
 
         <Card style={{ width: '100%', maxWidth: '800px' }}>
           <CardContent style={{ padding: '2rem' }}>
-            <form onSubmit={handleSubmit}>
+            <Box>
               <Box
                 display="flex"
                 flexDirection="column"
@@ -283,33 +302,55 @@ const TerminosCondicionesPage = () => {
 
               <Box
                 display="flex"
-                justifyContent="center"
-                className="navigation-buttons"
-                style={{ marginTop: '2rem' }}
+                flexDirection="column"
+                alignItems="center"
+                style={{ marginTop: '2rem', gap: '1.5rem' }}
               >
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowBack />}
-                  onClick={() => history.push('/apertura/individuo/declaracion-ingresos')}
-                  className="navigation-button"
-                  disabled={loading}
-                >
-                  Volver
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  className="navigation-button"
-                  disabled={loading || !isFormValid()}
-                  style={{
-                    backgroundColor: isFormValid() ? 'var(--main-green)' : '#ccc',
-                    color: '#fff'
-                  }}
-                >
-                  {loading ? <CircularProgress size={20} color="inherit" /> : 'Continuar'}
-                </Button>
+                <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center', color: '#333' }}>
+                  ¿Desea agregar Co-Titulares a su cuenta?
+                </Typography>
+                {error && (
+                  <Typography variant="body2" style={{ color: '#d32f2f', textAlign: 'center' }}>
+                    {error}
+                  </Typography>
+                )}
+                <Box display="flex" justifyContent="center" className="navigation-buttons" style={{ gap: '1.5rem' }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBack />}
+                    onClick={handleVolver}
+                    className="navigation-button"
+                    disabled={loading}
+                  >
+                    Volver
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleIrCotitulares}
+                    className="navigation-button"
+                    disabled={loading}
+                    style={{
+                      backgroundColor: 'var(--main-green)',
+                      color: '#fff'
+                    }}
+                  >
+                    {loading ? <CircularProgress size={20} color="inherit" /> : 'Sí'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleIrFin}
+                    className="navigation-button"
+                    disabled={loading}
+                    style={{
+                      backgroundColor: '#607d8b',
+                      color: '#fff'
+                    }}
+                  >
+                    {loading ? <CircularProgress size={20} color="inherit" /> : 'No'}
+                  </Button>
+                </Box>
               </Box>
-            </form>
+            </Box>
           </CardContent>
         </Card>
       </Box>
