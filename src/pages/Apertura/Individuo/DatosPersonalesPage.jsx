@@ -26,6 +26,13 @@ const DatosPersonalesPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
+    // Datos Principales
+    nombres: '',
+    apellidos: '',
+    celular: '',
+    correoElectronico: '',
+    comoNosConocio: '',
+    // Datos Personales
     tipoID: 'DNI',
     idNumero: '',
     fechaNacimiento: '',
@@ -47,6 +54,7 @@ const DatosPersonalesPage = () => {
       claveFiscal: ''
     }
   });
+  const [emailError, setEmailError] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [fechaNacimientoError, setFechaNacimientoError] = useState('');
@@ -74,13 +82,24 @@ const DatosPersonalesPage = () => {
       
       if (currentSolicitudId) {
         setUploadedFiles([]);
+        
+        // Cargar datos principales
+        const datosPrincipalesResponse = await authenticationService.getDatosPrincipalesIndividuo(currentSolicitudId);
+        console.log('Respuesta del backend datos principales:', datosPrincipalesResponse);
+        
+        // Cargar datos personales
         const response = await authenticationService.getDatosPersonalesIndividuo(currentSolicitudId);
         console.log('Respuesta del backend datos personales:', response);
         
+        // Combinar datos principales y personales
+        const datosPrincipales = datosPrincipalesResponse && (datosPrincipalesResponse.status === 200 || datosPrincipalesResponse.ok)
+          ? datosPrincipalesResponse
+          : {};
+        
         if (response && (response.status === 200 || response.ok)) {
           // Los datos están directamente en la respuesta, no en response.data
-          if (response.tipoID || response.idNumero || response.fechaNacimiento) {
-            console.log('Cargando datos personales en el formulario:', response);
+          if (datosPrincipales.nombres || datosPrincipales.apellidos || response.tipoID || response.idNumero || response.fechaNacimiento) {
+            console.log('Cargando datos principales y personales en el formulario:', { datosPrincipales, response });
             const {
               conyuge: conyugeResponse,
               dniFrenteArchivoId,
@@ -92,6 +111,13 @@ const DatosPersonalesPage = () => {
 
             setFormData(prev => ({
               ...prev,
+              // Datos principales
+              nombres: datosPrincipales.nombres || prev.nombres,
+              apellidos: datosPrincipales.apellidos || prev.apellidos,
+              celular: datosPrincipales.celular || prev.celular,
+              correoElectronico: datosPrincipales.correoElectronico || prev.correoElectronico,
+              comoNosConocio: datosPrincipales.comoNosConocio || prev.comoNosConocio,
+              // Datos personales
               ...restoDatos,
               dniFrenteArchivoId: dniFrenteArchivoId || null,
               dniReversoArchivoId: dniReversoArchivoId || null,
@@ -100,6 +126,11 @@ const DatosPersonalesPage = () => {
                 ...(conyugeResponse || {})
               }
             }));
+            
+            // Validar email
+            if (datosPrincipales.correoElectronico) {
+              validateEmail(datosPrincipales.correoElectronico);
+            }
 
             if (response.dniFrenteArchivoId) {
               console.log('Cargando archivo DNI frente con ID:', response.dniFrenteArchivoId);
@@ -180,11 +211,49 @@ const DatosPersonalesPage = () => {
     }
   };
 
+  // Función pura para validar email sin actualizar estado (para usar en isFormValid)
+  const isEmailValid = (email) => {
+    if (!email) {
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Función que valida y actualiza el estado (para usar en handleInputChange)
+  const validateEmail = (email) => {
+    if (!email) {
+      setEmailError('');
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError('Ingrese un correo electrónico válido');
+      return false;
+    } else {
+      setEmailError('');
+      return true;
+    }
+  };
+
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (field === 'celular') {
+      const numericValue = value.replace(/[^0-9]/g, '');
+      setFormData(prev => ({
+        ...prev,
+        [field]: numericValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+    
+    // Validar email si es ese campo
+    if (field === 'correoElectronico') {
+      validateEmail(value);
+    }
     
     // Validar fecha de nacimiento si es ese campo
     if (field === 'fechaNacimiento') {
@@ -217,7 +286,17 @@ const DatosPersonalesPage = () => {
   };
 
   const isFormValid = () => {
-    // Validar campos requeridos principales
+    // Validar campos requeridos de datos principales
+    const datosPrincipalesValidos = 
+      formData.nombres.trim() !== '' &&
+      formData.apellidos.trim() !== '' &&
+      formData.celular.trim() !== '' &&
+      formData.correoElectronico.trim() !== '' &&
+      formData.comoNosConocio.trim() !== '' &&
+      !emailError &&
+      isEmailValid(formData.correoElectronico);
+    
+    // Validar campos requeridos de datos personales
     const camposRequeridos = [
       formData.tipoID,
       formData.idNumero,
@@ -235,7 +314,7 @@ const DatosPersonalesPage = () => {
     const camposCompletos = camposRequeridos.every(campo => campo && campo.trim() !== '');
     
     // Verificar que no haya errores de validación
-    const sinErrores = !fechaNacimientoError;
+    const sinErrores = !fechaNacimientoError && !emailError;
     
     // Verificar que se haya subido al menos un archivo DNI
     const archivoSubido = formData.dniFrenteArchivoId !== null;
@@ -254,7 +333,7 @@ const DatosPersonalesPage = () => {
       conyugeValido = camposConyuge.every(campo => campo && campo.trim() !== '');
     }
     
-    return camposCompletos && sinErrores && archivoSubido && conyugeValido;
+    return datosPrincipalesValidos && camposCompletos && sinErrores && archivoSubido && conyugeValido;
   };
 
   const handleFileUpload = async (event) => {
@@ -372,6 +451,11 @@ const DatosPersonalesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!isFormValid()) {
+      setError('Por favor complete todos los campos requeridos y corrija los errores.');
+      return;
+    }
+    
     if (!formData.dniFrenteArchivoId) {
       setError('Debe subir al menos el frente del DNI');
       return;
@@ -387,10 +471,49 @@ const DatosPersonalesPage = () => {
       setLoading(true);
       setError('');
       
+      const currentUser = authenticationService.currentUserValue;
       const currentSolicitudId = localStorage.getItem('currentSolicitudId');
       
+      if (!currentUser || !currentUser.id || !currentSolicitudId) {
+        setError('Error: Usuario o solicitud no encontrados');
+        setLoading(false);
+        return;
+      }
+
+      // Guardar datos principales primero
+      const datosPrincipalesParaGuardar = {
+        solicitudId: parseInt(currentSolicitudId),
+        idUsuario: currentUser.id,
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        celular: formData.celular,
+        correoElectronico: formData.correoElectronico,
+        comoNosConocio: formData.comoNosConocio
+      };
+      
+      const datosPrincipalesResponse = await authenticationService.saveDatosPrincipalesIndividuo(datosPrincipalesParaGuardar);
+      
+      if (!datosPrincipalesResponse || !(datosPrincipalesResponse.status === 200 || datosPrincipalesResponse.ok)) {
+        setError('Error al guardar los datos principales');
+        setLoading(false);
+        return;
+      }
+
+      // Luego guardar datos personales
       const dataToSave = {
-        ...formData,
+        tipoID: formData.tipoID,
+        idNumero: formData.idNumero,
+        fechaNacimiento: formData.fechaNacimiento,
+        lugarNacimiento: formData.lugarNacimiento,
+        nacionalidad: formData.nacionalidad,
+        paisOrigen: formData.paisOrigen,
+        paisResidencia: formData.paisResidencia,
+        actividad: formData.actividad,
+        sexo: formData.sexo,
+        estadoCivil: formData.estadoCivil,
+        dniFrenteArchivoId: formData.dniFrenteArchivoId,
+        dniReversoArchivoId: formData.dniReversoArchivoId,
+        conyuge: formData.conyuge,
         solicitudId: parseInt(currentSolicitudId)
       };
 
@@ -513,9 +636,8 @@ const DatosPersonalesPage = () => {
           <CardContent style={{ padding: '2rem' }}>
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" required>
                     <InputLabel>Tipo de Documento</InputLabel>
                     <Select
                       value={formData.tipoID}
@@ -530,7 +652,6 @@ const DatosPersonalesPage = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -541,8 +662,50 @@ const DatosPersonalesPage = () => {
                     required
                   />
                 </Grid>
-
-
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Nombres"
+                    required
+                    value={formData.nombres}
+                    onChange={(e) => handleInputChange('nombres', e.target.value)}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Apellidos"
+                    required
+                    value={formData.apellidos}
+                    onChange={(e) => handleInputChange('apellidos', e.target.value)}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Celular"
+                    required
+                    value={formData.celular}
+                    onChange={(e) => handleInputChange('celular', e.target.value)}
+                    variant="outlined"
+                    type="tel"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Correo Electrónico"
+                    required
+                    value={formData.correoElectronico}
+                    onChange={(e) => handleInputChange('correoElectronico', e.target.value)}
+                    variant="outlined"
+                    type="email"
+                    error={!!emailError}
+                    helperText={emailError}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -665,6 +828,19 @@ const DatosPersonalesPage = () => {
                   </FormControl>
                 </Grid>
 
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="¿Cómo nos conoció?"
+                    required
+                    value={formData.comoNosConocio}
+                    onChange={(e) => handleInputChange('comoNosConocio', e.target.value)}
+                    variant="outlined"
+                    multiline
+                    rows={3}
+                    placeholder="Ej: Google, Redes sociales, Referencia de un amigo, etc."
+                  />
+                </Grid>
 
                 <Grid item xs={12}>
                   <input
@@ -818,7 +994,7 @@ const DatosPersonalesPage = () => {
                     <Button
                       variant="outlined"
                       startIcon={<ArrowBack />}
-                      onClick={() => history.push('/apertura/individuo/datos-principales')}
+                      onClick={() => history.push('/tipo-apertura')}
                       className="navigation-button"
                     >
                       Volver

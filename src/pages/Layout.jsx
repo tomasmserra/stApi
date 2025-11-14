@@ -21,8 +21,22 @@ import PerfilInversorPage from './Apertura/Individuo/PerfilInversorPage'
 import DeclaracionIngresosPage from './Apertura/Individuo/DeclaracionIngresosPage'
 import TerminosCondicionesPage from './Apertura/Individuo/TerminosCondicionesPage'
 import DocumentoPdfPage from './Apertura/Individuo/DocumentoPdfPage'
-import CoTitularesPage from './Apertura/CoTitularesPage'
+import CoTitularesIndividuoPage from './Apertura/Individuo/CoTitularesPage'
 import FinAperturaPage from './Apertura/FinAperturaPage'
+import DatosPrincipalesEmpresaPage from './Apertura/Empresa/DatosPrincipalesPage'
+import DatosOrganizacionEmpresaPage from './Apertura/Empresa/DatosOrganizacionPage'
+import DomicilioEmpresaPage from './Apertura/Empresa/DomicilioPage'
+import DatosFiscalesEmpresaPage from './Apertura/Empresa/DatosFiscalesPage'
+import DatosFiscalesExteriorEmpresaPage from './Apertura/Empresa/DatosFiscalesExteriorPage'
+import RegistroEmpresaPage from './Apertura/Empresa/RegistroPage'
+import CuentasBancariasEmpresaPage from './Apertura/Empresa/CuentasBancariasPage'
+import CuentasBancariasExteriorEmpresaPage from './Apertura/Empresa/CuentasBancariasExteriorPage'
+import DeclaracionesEmpresaPage from './Apertura/Empresa/DeclaracionesPage'
+import PerfilInversorEmpresaPage from './Apertura/Empresa/PerfilInversorPage'
+import DocumentacionRespaldatoriaEmpresaPage from './Apertura/Empresa/DocumentacionRespaldatoriaPage'
+import TerminosCondicionesEmpresaPage from './Apertura/Empresa/TerminosCondicionesPage'
+import FirmantesEmpresaPage from './Apertura/Empresa/FirmantesPage'
+import AccionistasEmpresaPage from './Apertura/Empresa/AccionistasPage'
 import { CssBaseline } from '@material-ui/core';
 
 import { BrowserRouter as Router,
@@ -79,9 +93,23 @@ const Layout = props => {
                         <ProtectedRoute exact path="/apertura/individuo/perfil-inversor" component={PerfilInversorPage} />
                         <ProtectedRoute exact path="/apertura/individuo/declaracion-ingresos" component={DeclaracionIngresosPage} />
                         <ProtectedRoute exact path="/apertura/individuo/terminos-condiciones" component={TerminosCondicionesPage} />
-                        <ProtectedRoute exact path="/apertura/cotitulares" component={CoTitularesPage} />
+                        <ProtectedRoute exact path="/apertura/cotitulares" component={CoTitularesIndividuoPage} />
                         <ProtectedRoute exact path="/apertura/fin" component={FinAperturaPage} />
                         <ProtectedRoute exact path="/apertura/documento/:documento" component={DocumentoPdfPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/datos-principales" component={DatosPrincipalesEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/datos-organizacion" component={DatosOrganizacionEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/domicilio" component={DomicilioEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/datos-fiscales" component={DatosFiscalesEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/datos-fiscales-exterior" component={DatosFiscalesExteriorEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/registro" component={RegistroEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/cuentas-bancarias" component={CuentasBancariasEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/cuentas-bancarias-exterior" component={CuentasBancariasExteriorEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/declaraciones" component={DeclaracionesEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/perfil-inversor" component={PerfilInversorEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/documentacion-respaldatoria" component={DocumentacionRespaldatoriaEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/accionistas" component={AccionistasEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/terminos-condiciones" component={TerminosCondicionesEmpresaPage} />
+                        <ProtectedRoute exact path="/apertura/empresa/firmantes" component={FirmantesEmpresaPage} />
                     
                     <Route>
                       <Col>

@@ -151,6 +151,7 @@ const DatosPrincipalesPage = () => {
       
       if (response && (response.status === 200 || response.ok)) {
         console.log('Datos guardados exitosamente:', response);
+        // Redirigir a datos personales (que ahora incluye datos principales)
         history.push('/apertura/individuo/datos-personales');
       } else {
         console.error('Error al guardar datos:', response);

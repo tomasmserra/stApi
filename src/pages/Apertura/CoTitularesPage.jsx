@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   Box,
@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -28,10 +29,10 @@ import {
   useMediaQuery,
   useTheme
 } from '@material-ui/core';
-import { Add, ArrowBack, Delete, Edit } from '@material-ui/icons';
-import { authenticationService, firmantesService } from '../../services';
+import { Add, Delete, Edit } from '@material-ui/icons';
+import { authenticationService, firmantesService, empresaService } from '../../services';
 
-const steps = ['Datos Principales', 'Datos Personales', 'Domicilio', 'Datos Fiscales', 'Declaraciones'];
+const steps = ['Datos Personales', 'Domicilio', 'Datos Fiscales', 'Declaraciones'];
 
 const initialFormData = {
   id: null,
@@ -39,7 +40,8 @@ const initialFormData = {
     nombres: '',
     apellidos: '',
     celular: '',
-    correoElectronico: ''
+    correoElectronico: '',
+    porcentajeParticipacion: ''
   },
   datosPersonales: {
     id: null,
@@ -180,7 +182,37 @@ const tipoGananciaOptions = [
   { value: 'RESPONSABLE_MONOTRIBUTO', label: 'Responsable monotributo' }
 ];
 
-const CoTitularesPage = () => {
+const CoTitularesPage = ({
+  title = 'Co-Titulares',
+  entitySingular = 'Co-Titular',
+  entityPlural = 'Co-Titulares',
+  addButtonLabel,
+  addTitle,
+  editTitle,
+  saveButtonLabel,
+  emptyStateMessage,
+  tipoFirmante = 'CO_TITULAR',
+  finalizeButtonLabel,
+  finalizePath = '/apertura/fin',
+  backPath = null,
+  listKey = 'firmantes',
+  fetchService,
+  createService,
+  updateService,
+  deleteService,
+  showPorcentajeParticipacion = false,
+  headerMessage = null
+} = {}) => {
+  const entityLowerSingular = entitySingular.toLowerCase();
+  const entityLowerPlural = entityPlural.toLowerCase();
+  const resolvedAddButtonLabel = addButtonLabel || `Agregar ${entitySingular}`;
+  const resolvedEditTitle = editTitle || `Editar ${entitySingular}`;
+  const resolvedAddTitle = addTitle || `Agregar ${entitySingular}`;
+  const resolvedSaveButtonLabel = saveButtonLabel || `Guardar ${entitySingular}`;
+  const resolvedEmptyStateMessage =
+    emptyStateMessage ||
+    `Aún no registraste ${entityLowerPlural}. Utilizá el botón "${resolvedAddButtonLabel}" para comenzar.`;
+  const resolvedFinalizeButtonLabel = finalizeButtonLabel || 'Finalizar';
   const history = useHistory();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -193,8 +225,71 @@ const CoTitularesPage = () => {
   const [formData, setFormData] = useState(initialFormData);
   const [editingFirmanteId, setEditingFirmanteId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [buscandoAccionista, setBuscandoAccionista] = useState(false);
+  const [provincias, setProvincias] = useState([]);
+  const [localidades, setLocalidades] = useState([]);
+  const [provinciaSeleccionadaId, setProvinciaSeleccionadaId] = useState(null);
 
   const solicitudId = useMemo(() => localStorage.getItem('currentSolicitudId'), []);
+
+  const fetchFn = useCallback(
+    (id) => (fetchService ? fetchService(id) : firmantesService.getFirmantes(id)),
+    [fetchService]
+  );
+
+  const createFn = useCallback(
+    (id, payload) => (createService ? createService(id, payload) : firmantesService.createFirmante(id, payload)),
+    [createService]
+  );
+
+  const updateFn = useCallback(
+    (id, firmanteId, payload) =>
+      updateService ? updateService(id, firmanteId, payload) : firmantesService.updateFirmante(id, firmanteId, payload),
+    [updateService]
+  );
+
+  const deleteFn = useCallback(
+    (id, firmanteId) =>
+      deleteService ? deleteService(id, firmanteId) : firmantesService.deleteFirmante(id, firmanteId),
+    [deleteService]
+  );
+
+  const cargarFirmantes = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      if (!solicitudId) {
+        setError('No se encontró el identificador de la solicitud.');
+        return;
+      }
+
+      const response = await fetchFn(solicitudId);
+
+      let success = false;
+      let lista = [];
+
+      if (Array.isArray(response)) {
+        success = true;
+        lista = response;
+      } else if (response && (response.status === 200 || response.status === 204 || response.ok)) {
+        success = true;
+        lista = response[listKey] || response.firmantes || response.accionistas || [];
+      }
+
+      if (success) {
+        setFirmantes(lista);
+        setError('');
+      } else {
+        setError(`Error al obtener los ${entityLowerPlural}.`);
+      }
+    } catch (err) {
+      console.error(`Error cargando ${entityLowerPlural}:`, err);
+      setError(`Error al cargar los ${entityLowerPlural}.`);
+    } finally {
+      setLoading(false);
+    }
+  }, [solicitudId, entityLowerPlural, fetchFn, listKey]);
 
   useEffect(() => {
     const checkSession = () => {
@@ -209,39 +304,71 @@ const CoTitularesPage = () => {
     if (checkSession()) {
       cargarFirmantes();
     }
-  }, [history, solicitudId]);
+  }, [history, cargarFirmantes]);
 
-  const cargarFirmantes = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      if (!solicitudId) {
-        setError('No se encontró el identificador de la solicitud.');
-        return;
+  // Cargar provincias al montar el componente
+  useEffect(() => {
+    const cargarProvincias = async () => {
+      try {
+        const provinciasData = await empresaService.getProvincias();
+        if (Array.isArray(provinciasData) && provinciasData.length > 0) {
+          setProvincias(provinciasData);
+        } else {
+          setProvincias([]);
+        }
+      } catch (err) {
+        console.error('Error cargando provincias:', err);
+        setProvincias([]);
       }
+    };
+    cargarProvincias();
+  }, []);
 
-      const response = await firmantesService.getFirmantes(solicitudId);
-
-      if (response && (response.status === 200 || response.ok)) {
-        const lista = Array.isArray(response) ? response : response.firmantes || [];
-        setFirmantes(lista);
+  // Cargar localidades cuando se selecciona una provincia
+  useEffect(() => {
+    const cargarLocalidades = async () => {
+      if (provinciaSeleccionadaId) {
+        try {
+          const localidadesData = await empresaService.getLocalidades(provinciaSeleccionadaId);
+          setLocalidades(localidadesData || []);
+        } catch (err) {
+          console.error('Error cargando localidades:', err);
+          setLocalidades([]);
+        }
       } else {
-        setError('Error al obtener los co-titulares.');
+        setLocalidades([]);
       }
-    } catch (err) {
-      console.error('Error cargando co-titulares:', err);
-      setError('Error al cargar los co-titulares.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    cargarLocalidades();
+  }, [provinciaSeleccionadaId]);
+
+  // Inicializar provincia seleccionada cuando se cargan los datos y las provincias están disponibles
+  useEffect(() => {
+    const inicializarProvincia = async () => {
+      if (formData.domicilio.provincia && provincias.length > 0 && !provinciaSeleccionadaId) {
+        const provinciaEncontrada = provincias.find(p => p.codigoUIF === formData.domicilio.provincia);
+        if (provinciaEncontrada) {
+          setProvinciaSeleccionadaId(provinciaEncontrada.id);
+          // Cargar las localidades de esa provincia
+          try {
+            const localidadesData = await empresaService.getLocalidades(provinciaEncontrada.id);
+            setLocalidades(localidadesData || []);
+          } catch (err) {
+            console.error('Error cargando localidades:', err);
+          }
+        }
+      }
+    };
+    inicializarProvincia();
+  }, [formData.domicilio.provincia, provincias, provinciaSeleccionadaId]);
 
   const handleOpenCrear = () => {
     setFormData(initialFormData);
     setActiveStep(0);
     setEditingFirmanteId(null);
     setFormError('');
+    setProvinciaSeleccionadaId(null);
+    setLocalidades([]);
     setFormOpen(true);
   };
 
@@ -261,7 +388,8 @@ const CoTitularesPage = () => {
         nombres: datosPrincipales.nombres ?? firmante.nombres ?? '',
         apellidos: datosPrincipales.apellidos ?? firmante.apellidos ?? '',
         celular: datosPrincipales.celular ?? firmante.celular ?? '',
-        correoElectronico: datosPrincipales.correoElectronico ?? firmante.correoElectronico ?? ''
+        correoElectronico: datosPrincipales.correoElectronico ?? firmante.correoElectronico ?? '',
+        porcentajeParticipacion: datosPrincipales.porcentajeParticipacion ?? firmante.porcentajeParticipacion ?? firmante.porcentaje ?? ''
       },
       datosPersonales: {
         id: datosPersonales.id ?? null,
@@ -329,6 +457,9 @@ const CoTitularesPage = () => {
     setEditingFirmanteId(normalizado.id);
     setActiveStep(0);
     setFormError('');
+    // Limpiar provincia seleccionada para que se recargue si existe
+    setProvinciaSeleccionadaId(null);
+    setLocalidades([]);
     setFormOpen(true);
   };
 
@@ -340,9 +471,11 @@ const CoTitularesPage = () => {
     setActiveStep(0);
     setFormError('');
     setSaving(false);
+    setProvinciaSeleccionadaId(null);
+    setLocalidades([]);
   };
 
-  const handleFieldChange = (path, value) => {
+  const handleFieldChange = async (path, value) => {
     setFormData((prev) => {
       const newData = { ...prev };
       let current = newData;
@@ -354,6 +487,139 @@ const CoTitularesPage = () => {
       current[path[path.length - 1]] = value;
       return newData;
     });
+
+    // Si es firmante de empresa y se está cambiando el número de documento, verificar si existe como accionista
+    if (
+      tipoFirmante === 'FIRMANTE' &&
+      path.length === 2 &&
+      path[0] === 'datosPersonales' &&
+      path[1] === 'idNumero' &&
+      value &&
+      value.trim() !== '' &&
+      solicitudId &&
+      !editingFirmanteId // Solo buscar si es un nuevo firmante, no al editar
+    ) {
+      verificarAccionistaPorDocumento(value.trim());
+    }
+  };
+
+  const verificarAccionistaPorDocumento = async (numeroDocumento) => {
+    if (!solicitudId || !numeroDocumento || numeroDocumento.length < 7) {
+      // Solo buscar si el documento tiene al menos 7 caracteres para evitar búsquedas muy tempranas
+      return;
+    }
+
+    try {
+      setBuscandoAccionista(true);
+      setFormError('');
+      
+      // Guardar el número de documento actual antes de hacer la búsqueda
+      const numeroDocumentoActual = formData.datosPersonales.idNumero;
+      
+      const response = await empresaService.getAccionistaPorDocumento(solicitudId, numeroDocumento);
+      
+      if (response && response.ok && response.status === 200) {
+        // El accionista existe, cargar sus datos en el formulario
+        console.log('Accionista encontrado:', response);
+        
+        // Normalizar los datos del accionista al formato de firmante
+        const accionistaData = normalizarDatosAccionista(response);
+        // Asegurarse de mantener el número de documento que el usuario ingresó
+        accionistaData.datosPersonales.idNumero = numeroDocumentoActual;
+        setFormData(accionistaData);
+        
+        // Mostrar un mensaje informativo
+        setFormError('');
+      } else {
+        // No existe o hubo un error, no hacer nada (mantener el número de documento ingresado)
+        console.log('Accionista no encontrado para el documento:', numeroDocumento);
+        // El número de documento ya está guardado en el formData, no necesitamos hacer nada
+      }
+    } catch (err) {
+      console.error('Error verificando accionista por documento:', err);
+      // En caso de error, no interrumpir el flujo del usuario ni modificar el número de documento
+    } finally {
+      setBuscandoAccionista(false);
+    }
+  };
+
+  const normalizarDatosAccionista = (accionista) => {
+    if (!accionista || accionista.tipo !== 'PERSONA' || !accionista.datosPersona) {
+      return { ...initialFormData };
+    }
+
+    const datosPersona = accionista.datosPersona;
+    const datosPrincipales = datosPersona.datosPrincipales || {};
+    const datosPersonales = datosPersona.datosPersonales || {};
+    const domicilio = datosPersona.domicilio || {};
+    const datosFiscales = datosPersona.datosFiscales || {};
+    const declaraciones = datosPersona.declaraciones || {};
+    const conyuge = datosPersonales.conyuge || {};
+
+    return {
+      id: null, // Nuevo firmante, no tiene ID aún
+      datosPrincipales: {
+        nombres: datosPrincipales.nombres || '',
+        apellidos: datosPrincipales.apellidos || '',
+        celular: datosPrincipales.celular || '',
+        correoElectronico: datosPrincipales.correoElectronico || '',
+        porcentajeParticipacion: '' // No transferir porcentaje de participación
+      },
+      datosPersonales: {
+        id: datosPersonales.id || null,
+        tipoID: datosPersonales.tipoID || 'DNI',
+        idNumero: datosPersonales.idNumero || '',
+        fechaNacimiento: datosPersonales.fechaNacimiento || '',
+        lugarNacimiento: datosPersonales.lugarNacimiento || '',
+        nacionalidad: datosPersonales.nacionalidad || 'ARGENTINA',
+        paisOrigen: datosPersonales.paisOrigen || 'ARGENTINA',
+        paisResidencia: datosPersonales.paisResidencia || 'ARGENTINA',
+        actividad: datosPersonales.actividad || '',
+        sexo: datosPersonales.sexo || 'MASCULINO',
+        estadoCivil: datosPersonales.estadoCivil || 'SOLTERO',
+        dniFrenteArchivoId: datosPersonales.dniFrenteArchivoId || null,
+        dniReversoArchivoId: datosPersonales.dniReversoArchivoId || null,
+        conyuge: {
+          id: conyuge.id || null,
+          nombres: conyuge.nombres || '',
+          apellidos: conyuge.apellidos || '',
+          tipoID: conyuge.tipoID || 'DNI',
+          idNumero: conyuge.idNumero || '',
+          tipoClaveFiscal: conyuge.tipoClaveFiscal || 'CUIT',
+          claveFiscal: conyuge.claveFiscal || ''
+        }
+      },
+      domicilio: {
+        id: domicilio.id || null,
+        tipo: domicilio.tipo || 'LEGAL',
+        calle: domicilio.calle || '',
+        numero: domicilio.numero || '',
+        piso: domicilio.piso || '',
+        depto: domicilio.depto || '',
+        barrio: domicilio.barrio || '',
+        ciudad: domicilio.ciudad || '',
+        provincia: domicilio.provincia || '',
+        pais: domicilio.pais || 'ARGENTINA',
+        cp: domicilio.cp || ''
+      },
+      datosFiscales: {
+        id: datosFiscales.id || null,
+        tipo: datosFiscales.tipo || 'CUIT',
+        claveFiscal: datosFiscales.claveFiscal || '',
+        tipoIva: datosFiscales.tipoIva || 'CONSUMIDOR_FINAL',
+        tipoGanancia: datosFiscales.tipoGanancia || 'NO_INSCRIPTO',
+        residenciaFiscal: datosFiscales.residenciaFiscal || 'ARGENTINA',
+        debeCompletarFiscalExterior: datosFiscales.debeCompletarFiscalExterior || false
+      },
+      declaraciones: {
+        esPep: declaraciones.esPep || false,
+        motivoPep: declaraciones.motivoPep || '',
+        esFATCA: declaraciones.esFATCA || false,
+        motivoFatca: declaraciones.motivoFatca || '',
+        declaraUIF: declaraciones.declaraUIF || false,
+        motivoUIF: declaraciones.motivoUIF || ''
+      }
+    };
   };
 
   const persistCurrentForm = async () => {
@@ -371,13 +637,14 @@ const CoTitularesPage = () => {
     }
     const payload = {
       id: currentId,
-      tipo: 'CO_TITULAR',
+      tipo: tipoFirmante,
       datosPrincipales: {
         ...formData.datosPrincipales,
         nombres: formData.datosPrincipales.nombres ?? '',
         apellidos: formData.datosPrincipales.apellidos ?? '',
         celular: formData.datosPrincipales.celular ?? '',
-        correoElectronico: formData.datosPrincipales.correoElectronico ?? ''
+        correoElectronico: formData.datosPrincipales.correoElectronico ?? '',
+        porcentajeParticipacion: formData.datosPrincipales.porcentajeParticipacion ?? ''
       },
       datosPersonales: {
         ...formData.datosPersonales,
@@ -393,9 +660,9 @@ const CoTitularesPage = () => {
         estadoCivil: formData.datosPersonales.estadoCivil ?? 'SOLTERO',
         dniFrenteArchivoId: formData.datosPersonales.dniFrenteArchivoId ?? null,
         dniReversoArchivoId: formData.datosPersonales.dniReversoArchivoId ?? null,
-        conyuge: {
+        conyuge: formData.datosPersonales.estadoCivil === 'CASADO' ? {
           ...formData.datosPersonales.conyuge
-        }
+        } : null
       },
       domicilio: {
         ...formData.domicilio,
@@ -431,6 +698,11 @@ const CoTitularesPage = () => {
       apellidos: formData.datosPrincipales.apellidos,
       celular: formData.datosPrincipales.celular,
       correoElectronico: formData.datosPrincipales.correoElectronico,
+      ...(showPorcentajeParticipacion && formData.datosPrincipales.porcentajeParticipacion
+        ? {
+            porcentajeParticipacion: parseFloat(formData.datosPrincipales.porcentajeParticipacion)
+          }
+        : {}),
       tipoID: formData.datosPersonales.tipoID,
       idNumero: formData.datosPersonales.idNumero,
       fechaNacimiento: formData.datosPersonales.fechaNacimiento,
@@ -455,52 +727,60 @@ const CoTitularesPage = () => {
       setSaving(true);
       let response;
       if (currentId) {
-        response = await firmantesService.updateFirmante(solicitudId, currentId, payload);
+        response = await updateFn(solicitudId, currentId, payload);
       } else {
-        response = await firmantesService.createFirmante(solicitudId, payload);
+        response = await createFn(solicitudId, payload);
       }
 
       const success =
         response && (response.status === 200 || response.status === 201 || response.status === 204 || response.ok);
 
       if (!success) {
-        setFormError('Error al guardar el co-titular.');
+        setFormError(`Error al guardar el ${entityLowerSingular}.`);
         return false;
       }
 
       setFormError('');
       return true;
     } catch (err) {
-      console.error('Error guardando co-titular:', err);
-      setFormError('Error al guardar el co-titular.');
+      console.error(`Error guardando ${entityLowerSingular}:`, err);
+      setFormError(`Error al guardar el ${entityLowerSingular}.`);
       return false;
     } finally {
       setSaving(false);
     }
   };
 
-  const validateStep = (stepIndex) => {
+  const isStepValid = (stepIndex) => {
     switch (stepIndex) {
       case 0: {
-        const { nombres, apellidos, correoElectronico } = formData.datosPrincipales;
-        if (!nombres || !apellidos || !correoElectronico) {
-          setFormError('Completá al menos nombre, apellido y correo electrónico.');
+        const { nombres, apellidos, celular, correoElectronico, porcentajeParticipacion } = formData.datosPrincipales;
+        const { tipoID, idNumero, fechaNacimiento, lugarNacimiento, nacionalidad, paisOrigen, paisResidencia, actividad, sexo, estadoCivil, conyuge } = formData.datosPersonales;
+        // Validar datos principales
+        if (!nombres || !apellidos || !celular || !correoElectronico) {
           return false;
         }
-        break;
+        if (showPorcentajeParticipacion) {
+          const porcentaje = parseFloat(porcentajeParticipacion);
+          if (!porcentajeParticipacion || isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+            return false;
+          }
+        }
+        // Validar datos personales
+        if (!tipoID || !idNumero || !fechaNacimiento || !lugarNacimiento || !nacionalidad || !paisOrigen || !paisResidencia || !actividad || !sexo || !estadoCivil) {
+          return false;
+        }
+        // Validar datos del cónyuge si el estado civil es CASADO
+        if (estadoCivil === 'CASADO') {
+          if (!conyuge.nombres || !conyuge.apellidos || !conyuge.tipoID || !conyuge.idNumero || !conyuge.tipoClaveFiscal || !conyuge.claveFiscal) {
+            return false;
+          }
+        }
+        return true;
       }
       case 1: {
-        const { tipoID, idNumero, fechaNacimiento } = formData.datosPersonales;
-        if (!tipoID || !idNumero || !fechaNacimiento) {
-          setFormError('Completá tipo y número de documento y la fecha de nacimiento.');
-          return false;
-        }
-        break;
-      }
-      case 2: {
-        const { calle, numero, ciudad, provincia, pais } = formData.domicilio;
-        if (!calle || !numero || !ciudad || !provincia || !pais) {
-          setFormError('Completá los datos principales del domicilio.');
+        const { calle, numero, ciudad, provincia, pais, cp } = formData.domicilio;
+        if (!calle || !numero || !ciudad || !provincia || !pais || !cp) {
           return false;
         }
         break;
@@ -508,18 +788,53 @@ const CoTitularesPage = () => {
       default:
         break;
     }
+    return true;
+  };
+
+  const validateStep = (stepIndex) => {
+    if (!isStepValid(stepIndex)) {
+      switch (stepIndex) {
+        case 0: {
+          const { nombres, apellidos, celular, correoElectronico, porcentajeParticipacion } = formData.datosPrincipales;
+          const { tipoID, idNumero, fechaNacimiento, lugarNacimiento, nacionalidad, paisOrigen, paisResidencia, actividad, sexo, estadoCivil, conyuge } = formData.datosPersonales;
+          if (!nombres || !apellidos || !celular || !correoElectronico) {
+            setFormError('Completá al menos nombre, apellido, celular y correo electrónico.');
+          } else if (showPorcentajeParticipacion) {
+            const porcentaje = parseFloat(porcentajeParticipacion);
+            if (!porcentajeParticipacion || isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+              setFormError('Completá el porcentaje de participación (debe ser un número entre 0 y 100).');
+            }
+          } else if (!tipoID || !idNumero || !fechaNacimiento || !lugarNacimiento || !nacionalidad || !paisOrigen || !paisResidencia || !actividad || !sexo || !estadoCivil) {
+            setFormError('Completá todos los datos personales requeridos.');
+          } else if (estadoCivil === 'CASADO' && (!conyuge.nombres || !conyuge.apellidos || !conyuge.tipoID || !conyuge.idNumero || !conyuge.tipoClaveFiscal || !conyuge.claveFiscal)) {
+            setFormError('Completá todos los datos del cónyuge requeridos.');
+          }
+          break;
+        }
+        case 1: {
+          const { calle, numero, ciudad, provincia, pais, cp } = formData.domicilio;
+          if (!calle || !numero || !ciudad || !provincia || !pais || !cp) {
+            setFormError('Completá todos los datos del domicilio requeridos (calle, número, ciudad, provincia, país y código postal).');
+          }
+          break;
+        }
+        default:
+          setFormError('Completá los campos requeridos.');
+          break;
+      }
+      return false;
+    }
     setFormError('');
     return true;
   };
 
   const handleNext = () => {
-    if (validateStep(activeStep)) {
-      persistCurrentForm().then((saved) => {
-        if (saved) {
-          setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
-        }
-      });
-    }
+    if (!validateStep(activeStep)) return;
+    persistCurrentForm().then((saved) => {
+      if (saved) {
+        setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+      }
+    });
   };
 
   const handleBack = () => {
@@ -540,24 +855,26 @@ const CoTitularesPage = () => {
     });
   };
 
+  const isCurrentStepValid = isStepValid(activeStep);
+
   const handleDelete = async (firmante) => {
     if (!solicitudId || !firmante?.id) return;
     const confirmar = window.confirm(
-      `¿Seguro que querés eliminar al co-titular ${firmante.datosPrincipales?.nombres || ''} ${firmante.datosPrincipales?.apellidos || ''}?`
+      `¿Seguro que querés eliminar al ${entityLowerSingular} ${firmante.datosPrincipales?.nombres || ''} ${firmante.datosPrincipales?.apellidos || ''}?`
     );
     if (!confirmar) return;
 
     try {
       setLoading(true);
-      const response = await firmantesService.deleteFirmante(solicitudId, firmante.id);
+      const response = await deleteFn(solicitudId, firmante.id);
       if (response && (response.status === 200 || response.status === 204 || response.ok)) {
         await cargarFirmantes();
       } else {
-        setError('Error al eliminar el co-titular.');
+        setError(`Error al eliminar el ${entityLowerSingular}.`);
       }
     } catch (err) {
-      console.error('Error eliminando co-titular:', err);
-      setError('Error al eliminar el co-titular.');
+      console.error(`Error eliminando ${entityLowerSingular}:`, err);
+      setError(`Error al eliminar el ${entityLowerSingular}.`);
     } finally {
       setLoading(false);
     }
@@ -568,6 +885,39 @@ const CoTitularesPage = () => {
       case 0:
         return (
           <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined" required>
+                <InputLabel>Tipo de documento</InputLabel>
+                <Select
+                  value={formData.datosPersonales.tipoID}
+                  onChange={(e) => handleFieldChange(['datosPersonales', 'tipoID'], e.target.value)}
+                  label="Tipo de documento"
+                >
+                  {tipoDocumentoOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Número de documento"
+                variant="outlined"
+                value={formData.datosPersonales.idNumero}
+                onChange={(e) => handleFieldChange(['datosPersonales', 'idNumero'], e.target.value.replace(/[^0-9]/g, ''))}
+                required
+                InputProps={{
+                  endAdornment: buscandoAccionista ? (
+                    <InputAdornment position="end">
+                      <CircularProgress size={20} />
+                    </InputAdornment>
+                  ) : null
+                }}
+              />
+            </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -595,6 +945,7 @@ const CoTitularesPage = () => {
                 variant="outlined"
                 value={formData.datosPrincipales.celular}
                 onChange={(e) => handleFieldChange(['datosPrincipales', 'celular'], e.target.value)}
+                required
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -607,37 +958,25 @@ const CoTitularesPage = () => {
                 required
               />
             </Grid>
-          </Grid>
-        );
-      case 1:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Tipo de documento</InputLabel>
-                <Select
-                  value={formData.datosPersonales.tipoID}
-                  onChange={(e) => handleFieldChange(['datosPersonales', 'tipoID'], e.target.value)}
-                  label="Tipo de documento"
-                >
-                  {tipoDocumentoOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Número de documento"
-                variant="outlined"
-                value={formData.datosPersonales.idNumero}
-                onChange={(e) => handleFieldChange(['datosPersonales', 'idNumero'], e.target.value.replace(/[^0-9]/g, ''))}
-                required
-              />
-            </Grid>
+            {showPorcentajeParticipacion && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Porcentaje de participación (%)"
+                  variant="outlined"
+                  type="number"
+                  inputProps={{ min: 0, max: 100, step: 0.01 }}
+                  value={formData.datosPrincipales.porcentajeParticipacion}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || (!isNaN(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                      handleFieldChange(['datosPrincipales', 'porcentajeParticipacion'], value);
+                    }
+                  }}
+                  required
+                />
+              </Grid>
+            )}
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -748,9 +1087,92 @@ const CoTitularesPage = () => {
                 </Select>
               </FormControl>
             </Grid>
+            
+            {/* Campos del Cónyuge - Solo mostrar si Estado Civil es CASADO */}
+            {formData.datosPersonales.estadoCivil === 'CASADO' && (
+              <>
+                <Grid item xs={12}>
+                  <Typography variant="h6" style={{ marginBottom: '1rem', color: 'var(--light-blue)', marginTop: '1rem' }}>
+                    Datos del Cónyuge
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Nombres"
+                    variant="outlined"
+                    value={formData.datosPersonales.conyuge.nombres}
+                    onChange={(e) => handleFieldChange(['datosPersonales', 'conyuge', 'nombres'], e.target.value)}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Apellidos"
+                    variant="outlined"
+                    value={formData.datosPersonales.conyuge.apellidos}
+                    onChange={(e) => handleFieldChange(['datosPersonales', 'conyuge', 'apellidos'], e.target.value)}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth variant="outlined" required>
+                    <InputLabel>Tipo de documento</InputLabel>
+                    <Select
+                      value={formData.datosPersonales.conyuge.tipoID}
+                      onChange={(e) => handleFieldChange(['datosPersonales', 'conyuge', 'tipoID'], e.target.value)}
+                      label="Tipo de documento"
+                    >
+                      {tipoDocumentoOptions.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Número de documento"
+                    variant="outlined"
+                    value={formData.datosPersonales.conyuge.idNumero}
+                    onChange={(e) => handleFieldChange(['datosPersonales', 'conyuge', 'idNumero'], e.target.value.replace(/[^0-9]/g, ''))}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth variant="outlined" required>
+                    <InputLabel>Tipo de clave fiscal</InputLabel>
+                    <Select
+                      value={formData.datosPersonales.conyuge.tipoClaveFiscal}
+                      onChange={(e) => handleFieldChange(['datosPersonales', 'conyuge', 'tipoClaveFiscal'], e.target.value)}
+                      label="Tipo de clave fiscal"
+                    >
+                      {tipoFiscalOptions.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Clave fiscal"
+                    variant="outlined"
+                    value={formData.datosPersonales.conyuge.claveFiscal}
+                    onChange={(e) => handleFieldChange(['datosPersonales', 'conyuge', 'claveFiscal'], e.target.value)}
+                    required
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         );
-      case 2:
+      case 1:
         return (
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
@@ -801,26 +1223,6 @@ const CoTitularesPage = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Ciudad"
-                variant="outlined"
-                value={formData.domicilio.ciudad}
-                onChange={(e) => handleFieldChange(['domicilio', 'ciudad'], e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Provincia"
-                variant="outlined"
-                value={formData.domicilio.provincia}
-                onChange={(e) => handleFieldChange(['domicilio', 'provincia'], e.target.value)}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>País</InputLabel>
                 <Select
@@ -837,17 +1239,63 @@ const CoTitularesPage = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined" required>
+                <InputLabel>Provincia</InputLabel>
+                <Select
+                  value={provinciaSeleccionadaId || ''}
+                  onChange={(e) => {
+                    const provinciaId = e.target.value;
+                    setProvinciaSeleccionadaId(provinciaId);
+                    const provincia = provincias.find(p => p.id === provinciaId);
+                    if (provincia) {
+                      handleFieldChange(['domicilio', 'provincia'], provincia.codigoUIF);
+                    }
+                    // Limpiar ciudad cuando cambia la provincia
+                    handleFieldChange(['domicilio', 'ciudad'], '');
+                  }}
+                  label="Provincia"
+                >
+                  {provincias.map((provincia) => (
+                    <MenuItem key={provincia.id} value={provincia.id}>
+                      {provincia.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined" required>
+                <InputLabel>Ciudad</InputLabel>
+                <Select
+                  value={formData.domicilio.ciudad || ''}
+                  onChange={(e) => {
+                    const localidadCodigoUIF = e.target.value;
+                    handleFieldChange(['domicilio', 'ciudad'], localidadCodigoUIF);
+                  }}
+                  label="Ciudad"
+                  disabled={!provinciaSeleccionadaId || localidades.length === 0}
+                >
+                  {localidades.map((localidad) => (
+                    <MenuItem key={localidad.id} value={localidad.codigoUIF}>
+                      {localidad.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Código Postal"
                 variant="outlined"
                 value={formData.domicilio.cp}
                 onChange={(e) => handleFieldChange(['domicilio', 'cp'], e.target.value)}
+                required
               />
             </Grid>
           </Grid>
         );
-      case 3:
+      case 2:
         return (
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
@@ -925,7 +1373,7 @@ const CoTitularesPage = () => {
             </Grid>
           </Grid>
         );
-      case 4:
+      case 3:
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -1020,7 +1468,7 @@ const CoTitularesPage = () => {
         gap="1rem"
       >
         <Typography variant="h4" component="h1" style={{ color: 'var(--light-blue)', fontWeight: 'bold' }}>
-          Co-Titulares
+          {title}
         </Typography>
         <Button
           variant="contained"
@@ -1029,9 +1477,25 @@ const CoTitularesPage = () => {
           onClick={handleOpenCrear}
           style={{ backgroundColor: 'var(--main-green)', color: '#fff', alignSelf: isMobile ? 'stretch' : 'auto' }}
         >
-          Agregar Co-Titular
+          {resolvedAddButtonLabel}
         </Button>
       </Box>
+
+      {headerMessage && (
+        <Card
+          style={{
+            marginBottom: '1rem',
+            backgroundColor: '#e3f2fd',
+            border: '1px solid #2196f3'
+          }}
+        >
+          <CardContent>
+            <Typography variant="body2" style={{ color: '#1976d2' }}>
+              {headerMessage}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
       {error && (
         <Card
@@ -1055,8 +1519,8 @@ const CoTitularesPage = () => {
               <CircularProgress />
             </Box>
           ) : firmantes.length === 0 ? (
-            <Typography variant="body2" color="textSecondary">
-              Aún no registraste co-titulares. Utilizá el botón &quot;Agregar Co-Titular&quot; para comenzar.
+            <Typography variant="body2" color="textSecondary" align="center">
+              {resolvedEmptyStateMessage}
             </Typography>
           ) : (
             <Table>
@@ -1065,6 +1529,7 @@ const CoTitularesPage = () => {
                   <TableCell>Nombres</TableCell>
                   <TableCell>Apellidos</TableCell>
                   {!isMobile && <TableCell>Documento</TableCell>}
+                  {showPorcentajeParticipacion && <TableCell align="right">Porcentaje (%)</TableCell>}
                   <TableCell align="right">Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -1076,12 +1541,17 @@ const CoTitularesPage = () => {
                   const documentoNumero = firmante?.idNumero || '';
                   const documento =
                     documentoTipo && documentoNumero ? `${documentoTipo} ${documentoNumero}` : documentoTipo || documentoNumero || '-';
+                  const porcentaje =
+                    showPorcentajeParticipacion &&
+                    (firmante?.porcentajeParticipacion ?? firmante?.porcentaje ?? firmante?.datosPrincipales?.porcentajeParticipacion ?? null);
+                  const porcentajeDisplay = porcentaje !== null && porcentaje !== undefined ? `${parseFloat(porcentaje).toFixed(2)}%` : '-';
 
                   return (
                     <TableRow key={firmante.id || `${nombres}-${apellidos}`}>
                       <TableCell>{nombres}</TableCell>
                       <TableCell>{apellidos}</TableCell>
                       {!isMobile && <TableCell>{documento}</TableCell>}
+                      {showPorcentajeParticipacion && <TableCell align="right">{porcentajeDisplay}</TableCell>}
                       <TableCell align="right">
                         <IconButton onClick={() => handleOpenEditar(firmante)}>
                           <Edit />
@@ -1111,7 +1581,7 @@ const CoTitularesPage = () => {
               gap="0.75rem"
             >
               <Typography variant="h6" style={{ fontWeight: 'bold' }}>
-                {editingFirmanteId ? 'Editar Co-Titular' : 'Agregar Co-Titular'}
+                {editingFirmanteId ? resolvedEditTitle : resolvedAddTitle}
               </Typography>
               <Button onClick={handleCancelForm} disabled={loading}>
                 Cancelar
@@ -1166,35 +1636,96 @@ const CoTitularesPage = () => {
                 <Button
                   variant="outlined"
                   onClick={handleNext}
-                  disabled={loading || saving}
+                  disabled={loading || saving || !isCurrentStepValid}
                 >
-                  Siguiente
+                  Continuar
                 </Button>
               ) : (
                 <Button
                   onClick={handleSave}
                   style={{ backgroundColor: 'var(--main-green)', color: '#fff' }}
-                  disabled={loading || saving}
+                  disabled={loading || saving || !isCurrentStepValid}
                 >
-                  {saving ? <CircularProgress size={20} color="inherit" /> : 'Guardar Co-Titular'}
+                  {saving ? <CircularProgress size={20} color="inherit" /> : resolvedSaveButtonLabel}
                 </Button>
               )}
             </Box>
           </CardContent>
         </Card>
       )}
-      {firmantes.length > 0 && (
-        <Box marginTop="2.5rem" display="flex" justifyContent="center">
-          <Button
-            variant="contained"
-            onClick={() => history.push('/apertura/fin')}
-            color="primary"
-            style={{ backgroundColor: 'var(--light-blue)', minWidth: '180px', color: '#fff', alignSelf: isMobile ? 'stretch' : 'auto' }}
-          >
-            Finalizar
-          </Button>
-        </Box>
-      )}
+      {firmantes.length > 0 && (() => {
+        let sumaPorcentajes = 0;
+        let porcentajeValido = true;
+
+        if (showPorcentajeParticipacion) {
+          sumaPorcentajes = firmantes.reduce((sum, firmante) => {
+            const porcentaje =
+              firmante?.porcentajeParticipacion ?? firmante?.porcentaje ?? firmante?.datosPrincipales?.porcentajeParticipacion ?? null;
+            if (porcentaje !== null && porcentaje !== undefined) {
+              const num = parseFloat(porcentaje);
+              if (!isNaN(num)) {
+                return sum + num;
+              }
+            }
+            return sum;
+          }, 0);
+          porcentajeValido = sumaPorcentajes > 10;
+        }
+
+        return (
+          <Box marginTop="2.5rem">
+            {showPorcentajeParticipacion && !porcentajeValido && (
+              <Card
+                style={{
+                  marginBottom: '1rem',
+                  backgroundColor: '#ffebee',
+                  border: '1px solid #f44336'
+                }}
+              >
+                <CardContent>
+                  <Typography variant="body2" style={{ color: '#d32f2f' }}>
+                    Para continuar, la suma del porcentaje de participación de los accionistas debe ser superior al 10%.
+                    Suma actual: {sumaPorcentajes.toFixed(2)}%
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+            <Box 
+              display="flex" 
+              justifyContent="center" 
+              className="navigation-buttons"
+              style={{ marginTop: '2rem' }}
+            >
+              {backPath && (
+                <Button
+                  variant="outlined"
+                  onClick={() => history.push(backPath)}
+                  className="navigation-button"
+                  style={{
+                    borderColor: 'var(--main-green)',
+                    color: 'var(--main-green)'
+                  }}
+                >
+                  Volver
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                onClick={() => history.push(finalizePath)}
+                color="primary"
+                disabled={showPorcentajeParticipacion && !porcentajeValido}
+                className="navigation-button"
+                style={{
+                  backgroundColor: showPorcentajeParticipacion && !porcentajeValido ? '#ccc' : 'var(--main-green)',
+                  color: '#fff'
+                }}
+              >
+                {resolvedFinalizeButtonLabel}
+              </Button>
+            </Box>
+          </Box>
+        );
+      })()}
     </Container>
   );
 };
