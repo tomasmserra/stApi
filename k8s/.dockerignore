@@ -1,0 +1,64 @@
+# Dependencies
+node_modules
+npm-debug.log
+# package-lock.json se necesita para npm ci
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs (already built)
+build
+coverage
+
+# IDE
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Deployment directories
+site
+# Excluir k8s excepto nginx.conf que se necesita en el Dockerfile
+k8s/**
+!k8s/nginx.conf
+
+# Source maps (not needed in production)
+*.map
+
+# Test files
+**/__tests__/**
+**/*.test.js
+**/*.test.jsx
+**/*.spec.js
+**/*.spec.jsx
+
+# Storybook
+.storybook
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Other
+CONFIGURACION_PRODUCCION.md
+staticwebapp.config.json
+package.json.backup
+

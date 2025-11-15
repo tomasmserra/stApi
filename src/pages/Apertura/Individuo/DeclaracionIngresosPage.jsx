@@ -15,6 +15,7 @@ import {
 } from '@material-ui/core';
 import { ArrowBack, CloudUpload, Delete } from '@material-ui/icons';
 import { authenticationService } from '../../../services';
+import env from '../../../config/env';
 
 const ORIGEN_FONDOS_OPTIONS = [
   {
@@ -144,7 +145,7 @@ const DeclaracionIngresosPage = () => {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
 
-      const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+      const ghostUrl = env.REACT_APP_GHOST_URL;
       const response = await fetch(`${ghostUrl}/api/archivos/upload`, {
         method: 'POST',
         headers: {

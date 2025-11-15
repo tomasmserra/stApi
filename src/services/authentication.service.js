@@ -1,4 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
+import env from '../config/env';
 
 const currentUserSubject = new BehaviorSubject(JSON.parse(localStorage.getItem('currentUser')));
 
@@ -42,7 +43,7 @@ export const authenticationService = {
 
 async function validarRegistro (token, email){
     debugger
-    let url = `${process.env.REACT_APP_API_URL}/api/registro/validado?correoElectronico=${email}&token=${token}`
+    let url = `${env.REACT_APP_API_URL}/api/registro/validado?correoElectronico=${email}&token=${token}`
     console.log(url)
 
     const data = await fetch(url)
@@ -60,7 +61,7 @@ async function login(correoElectronico, clave) {
         body: JSON.stringify({ correoElectronico, clave })
     };
 
-    let url = `${process.env.REACT_APP_API_URL}/api/login/cliente`
+    let url = `${env.REACT_APP_API_URL}/api/login/cliente`
     console.log(url)
 
     const data = await fetch(url, requestOptions)
@@ -77,7 +78,7 @@ async function register(correoElectronico, clave){
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correoElectronico, clave })
     };
-    let url = `${process.env.REACT_APP_API_URL}/api/registro/inicio`
+    let url = `${env.REACT_APP_API_URL}/api/registro/inicio`
 
     const data = await fetch(url, requestOptions)
     const result = await data.json();
@@ -95,7 +96,7 @@ async function sendVerificationCode(correoElectronico){
     };
     
     // Usar la URL del Ghost para el servicio de emails
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/auth/enviar-codigo`
 
     const response = await fetch(url, requestOptions)
@@ -119,7 +120,7 @@ async function validateCode(correoElectronico, codigo){
     };
     
     // Usar la URL del Ghost para el servicio de validación
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/auth/verificar-codigo`
 
     const response = await fetch(url, requestOptions)
@@ -181,7 +182,7 @@ async function getSolicitudesUsuario(idUsuario) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/solicitudes/usuario/${idUsuario}`;
 
     const response = await fetch(url, requestOptions);
@@ -203,7 +204,7 @@ async function crearSolicitud(tipo, idUsuarioCargo) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/solicitudes?tipo=${tipo}&idUsuarioCargo=${idUsuarioCargo}`;
 
     const response = await fetch(url, requestOptions);
@@ -225,7 +226,7 @@ async function getDatosPrincipalesIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-principales/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -249,7 +250,7 @@ async function saveDatosPrincipalesIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-principales/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -271,7 +272,7 @@ async function getDatosPersonalesIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-personales/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -295,7 +296,7 @@ async function saveDatosPersonalesIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-personales/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -317,7 +318,7 @@ async function getArchivo(archivoId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/archivos/${archivoId}`;
 
     const response = await fetch(url, requestOptions);
@@ -359,7 +360,7 @@ async function getDomicilioIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/domicilio/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -383,7 +384,7 @@ async function saveDomicilioIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/domicilio/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -405,7 +406,7 @@ async function getDatosFiscalesIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-fiscales/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -429,7 +430,7 @@ async function saveDatosFiscalesIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-fiscales/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -451,7 +452,7 @@ async function getDatosFiscalesExteriorIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-fiscales-exterior/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -475,7 +476,7 @@ async function saveDatosFiscalesExteriorIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/datos-fiscales-exterior/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -497,7 +498,7 @@ async function getCuentasBancariasIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/cuentas-bancarias/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -521,7 +522,7 @@ async function saveCuentasBancariasIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/cuentas-bancarias/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -543,7 +544,7 @@ async function getCuentasBancariasExteriorIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/cuentas-bancarias-exterior/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -567,7 +568,7 @@ async function saveCuentasBancariasExteriorIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/cuentas-bancarias-exterior/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -589,7 +590,7 @@ async function getDeclaracionesIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/declaraciones/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -613,7 +614,7 @@ async function saveDeclaracionesIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/declaraciones/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -635,7 +636,7 @@ async function getPerfilInversorIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/perfil-inversor/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -659,7 +660,7 @@ async function savePerfilInversorIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     let url = `${ghostUrl}/api/individuo-apertura/perfil-inversor/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -681,7 +682,7 @@ async function getDeclaracionIngresosIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     const url = `${ghostUrl}/api/individuo-apertura/ddjj-origen-fondos/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -705,7 +706,7 @@ async function saveDeclaracionIngresosIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     const url = `${ghostUrl}/api/individuo-apertura/ddjj-origen-fondos/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -727,7 +728,7 @@ async function getTerminosCondicionesIndividuo(solicitudId) {
         }
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     const url = `${ghostUrl}/api/individuo-apertura/terminos-condiciones/${solicitudId}`;
 
     const response = await fetch(url, requestOptions);
@@ -751,7 +752,7 @@ async function saveTerminosCondicionesIndividuo(datos) {
         body: JSON.stringify(datos)
     };
 
-    const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+    const ghostUrl = env.REACT_APP_GHOST_URL;
     const url = `${ghostUrl}/api/individuo-apertura/terminos-condiciones/${datos.solicitudId}`;
 
     const response = await fetch(url, requestOptions);

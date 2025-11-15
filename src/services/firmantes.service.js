@@ -1,4 +1,6 @@
-const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+import env from '../config/env';
+
+const ghostUrl = env.REACT_APP_GHOST_URL;
 
 async function getFirmantes(solicitudId) {
   const token = localStorage.getItem('token');

@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apertura-ingress
+  annotations:
+    kubernetes.io/ingress.class: public
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+  - host: apertura.stsecurities.com.ar
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: apertura-service
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - apertura.stsecurities.com.ar
+

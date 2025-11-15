@@ -14,6 +14,7 @@ import {
 import { ArrowBack } from '@material-ui/icons';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { authenticationService, empresaService } from '../../../services';
+import env from '../../../config/env';
 
 const initialFormData = {
   estatutoId: null,
@@ -137,7 +138,7 @@ const DocumentacionRespaldatoriaPage = () => {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
 
-      const ghostUrl = process.env.REACT_APP_GHOST_URL || 'http://localhost:8080';
+      const ghostUrl = env.REACT_APP_GHOST_URL;
       const response = await fetch(`${ghostUrl}/api/archivos/upload`, {
         method: 'POST',
         headers: {
