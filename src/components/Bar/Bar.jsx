@@ -6,6 +6,7 @@ import { Container, Row, Col } from "react-bootstrap"
 import CssBaseline from "@material-ui/core/CssBaseline"
 import useScrollTrigger from "@material-ui/core/useScrollTrigger"
 import { Button } from "@material-ui/core"
+import ExitToAppIcon from '@material-ui/icons/ExitToApp'
 import logo from '../../images/logo.png'
 import Slide from "@material-ui/core/Slide"
 import { Link, useHistory } from "react-router-dom"
@@ -37,6 +38,7 @@ HideOnScroll.propTypes = {
 
 export default function HeaderBar(props) {
   const history = useHistory();
+  const { loggedIn } = props;
 
   const handleAbrirCuenta = () => {
     // Si hay una sesión activa, cerrarla
@@ -47,6 +49,16 @@ export default function HeaderBar(props) {
       if (props.evaluarSesion) {
         props.evaluarSesion();
       }
+    }
+    // Ir al inicio
+    history.push('/');
+  };
+
+  const handleCerrarSesion = () => {
+    authenticationService.logout();
+    // Actualizar el estado de loggedIn en el componente padre
+    if (props.evaluarSesion) {
+      props.evaluarSesion();
     }
     // Ir al inicio
     history.push('/');
@@ -66,6 +78,17 @@ export default function HeaderBar(props) {
                   </Link>
                 </Col>
                 <Col className="my-auto text-right" xs={10}>
+                  {loggedIn ? (
+                    <Button 
+                      className="btn-deal ml-2" 
+                      style={{ minHeight: '36px', padding: '8px 16px', fontSize: '13px' }}
+                      onClick={handleCerrarSesion}
+                      startIcon={<ExitToAppIcon />}
+                    >
+                      CERRAR SESIÓN
+                    </Button>
+                  ) : (
+                    <>
                       <Button 
                         className="btn-deal ml-2" 
                         style={{ minHeight: '36px', padding: '8px 16px', fontSize: '13px' }}
@@ -88,19 +111,21 @@ export default function HeaderBar(props) {
                       >
                         <Button className="btn-deal btn-deal-blue ml-2" style={{ minHeight: '36px', padding: '8px 16px', fontSize: '13px' }}>OPERAR</Button>
                       </a>
+                    </>
+                  )}
                 </Col>
               </Row>
-                  <Row className="header d-lg-none">
-                    <Col className="my-auto">
-                      <img
-                        src={logo}
-                        alt="logo"
-                        className="p-1"
-                        style={{ height: "60px", width: "auto" }}
-                      />
-                    </Col>
+              <Row className="header d-lg-none">
+                <Col className="my-auto">
+                  <img
+                    src={logo}
+                    alt="logo"
+                    className="p-1"
+                    style={{ height: "60px", width: "auto" }}
+                  />
+                </Col>
                 <Col className="my-auto text-right">
-                  <MobileButtons />
+                  <MobileButtons loggedIn={loggedIn} evaluarSesion={props.evaluarSesion} />
                 </Col>
               </Row>
             </Container>

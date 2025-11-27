@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Container,
   FormControl,
@@ -29,8 +30,9 @@ import {
   useMediaQuery,
   useTheme
 } from '@material-ui/core';
-import { Add, Delete, Edit } from '@material-ui/icons';
+import { Add, Delete, Edit, CloudUpload } from '@material-ui/icons';
 import { authenticationService, firmantesService, empresaService } from '../../services';
+import env from '../../config/env';
 
 const steps = ['Datos Personales', 'Domicilio', 'Datos Fiscales', 'Declaraciones'];
 
@@ -229,6 +231,8 @@ const CoTitularesPage = ({
   const [provincias, setProvincias] = useState([]);
   const [localidades, setLocalidades] = useState([]);
   const [provinciaSeleccionadaId, setProvinciaSeleccionadaId] = useState(null);
+  const [uploadedDniFiles, setUploadedDniFiles] = useState([]);
+  const [uploadingDniFiles, setUploadingDniFiles] = useState(false);
 
   const solicitudId = useMemo(() => localStorage.getItem('currentSolicitudId'), []);
 
@@ -369,6 +373,7 @@ const CoTitularesPage = ({
     setFormError('');
     setProvinciaSeleccionadaId(null);
     setLocalidades([]);
+    setUploadedDniFiles([]);
     setFormOpen(true);
   };
 
@@ -460,6 +465,14 @@ const CoTitularesPage = ({
     // Limpiar provincia seleccionada para que se recargue si existe
     setProvinciaSeleccionadaId(null);
     setLocalidades([]);
+    // Limpiar y cargar archivos de DNI existentes
+    setUploadedDniFiles([]);
+    if (normalizado.datosPersonales.dniFrenteArchivoId) {
+      cargarArchivoDNI(normalizado.datosPersonales.dniFrenteArchivoId, 'frente');
+    }
+    if (normalizado.datosPersonales.dniReversoArchivoId) {
+      cargarArchivoDNI(normalizado.datosPersonales.dniReversoArchivoId, 'reverso');
+    }
     setFormOpen(true);
   };
 
@@ -473,6 +486,7 @@ const CoTitularesPage = ({
     setSaving(false);
     setProvinciaSeleccionadaId(null);
     setLocalidades([]);
+    setUploadedDniFiles([]);
   };
 
   const handleFieldChange = async (path, value) => {
@@ -622,6 +636,134 @@ const CoTitularesPage = ({
     };
   };
 
+  const cargarArchivoDNI = async (archivoId, side) => {
+    try {
+      const response = await authenticationService.getArchivo(archivoId);
+      
+      if (response && response.ok) {
+        const archivoExistente = {
+          id: archivoId,
+          name: response.filename || 'DNI.pdf',
+          size: response.blob.size,
+          type: response.blob.type,
+          url: response.url,
+          side
+        };
+        
+        setUploadedDniFiles(prev => {
+          const filtered = prev.filter(file => file.side !== side);
+          return [...filtered, archivoExistente];
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar el archivo DNI:', error);
+    }
+  };
+
+  const handleDniFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    const availableSides = [];
+    if (!formData.datosPersonales.dniFrenteArchivoId) availableSides.push('frente');
+    if (!formData.datosPersonales.dniReversoArchivoId) availableSides.push('reverso');
+
+    if (availableSides.length === 0) {
+      setFormError('Ya cargaste el frente y dorso del DNI. Eliminá un archivo para volver a subir.');
+      event.target.value = null;
+      return;
+    }
+
+    const filesToUpload = files.slice(0, availableSides.length);
+
+    setUploadingDniFiles(true);
+    try {
+      const uploadedResults = [];
+
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        const side = availableSides[i];
+
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        
+        const ghostUrl = env.REACT_APP_GHOST_URL;
+        const response = await fetch(`${ghostUrl}/api/archivos/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: uploadData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error uploading ${file.name}`);
+        }
+
+        const result = await response.json();
+        const fileId = result.id || result.dniArchivoId || result.archivoId;
+
+        if (!fileId) {
+          throw new Error('No se pudo obtener el ID del archivo subido');
+        }
+
+        uploadedResults.push({
+          id: fileId,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          side
+        });
+      }
+
+      setFormData(prev => {
+        const newData = { ...prev };
+        uploadedResults.forEach(result => {
+          if (result.side === 'frente') {
+            newData.datosPersonales.dniFrenteArchivoId = result.id;
+          } else if (result.side === 'reverso') {
+            newData.datosPersonales.dniReversoArchivoId = result.id;
+          }
+        });
+        return newData;
+      });
+
+      setUploadedDniFiles(prev => {
+        let updated = [...prev];
+        uploadedResults.forEach(result => {
+          updated = updated.filter(file => file.side !== result.side);
+          updated.push(result);
+        });
+        return updated;
+      });
+
+      setFormError('');
+    } catch (err) {
+      console.error('Error uploading files:', err);
+      setFormError('Error al subir los archivos de DNI');
+    } finally {
+      setUploadingDniFiles(false);
+      event.target.value = null;
+    }
+  };
+
+  const removeDniFile = (fileId) => {
+    const fileToRemove = uploadedDniFiles.find(file => file.id === fileId);
+    setUploadedDniFiles(prev => prev.filter(file => file.id !== fileId));
+    
+    if (fileToRemove) {
+      setFormData(prev => ({
+        ...prev,
+        datosPersonales: {
+          ...prev.datosPersonales,
+          ...(fileToRemove.side === 'frente'
+            ? { dniFrenteArchivoId: null }
+            : { dniReversoArchivoId: null })
+        }
+      }));
+    }
+  };
+
   const persistCurrentForm = async () => {
     if (!solicitudId) {
       setFormError('No se encontró el identificador de la solicitud.');
@@ -755,7 +897,7 @@ const CoTitularesPage = ({
     switch (stepIndex) {
       case 0: {
         const { nombres, apellidos, celular, correoElectronico, porcentajeParticipacion } = formData.datosPrincipales;
-        const { tipoID, idNumero, fechaNacimiento, lugarNacimiento, nacionalidad, paisOrigen, paisResidencia, actividad, sexo, estadoCivil, conyuge } = formData.datosPersonales;
+        const { tipoID, idNumero, fechaNacimiento, lugarNacimiento, nacionalidad, paisOrigen, paisResidencia, actividad, sexo, estadoCivil, conyuge, dniFrenteArchivoId } = formData.datosPersonales;
         // Validar datos principales
         if (!nombres || !apellidos || !celular || !correoElectronico) {
           return false;
@@ -768,6 +910,10 @@ const CoTitularesPage = ({
         }
         // Validar datos personales
         if (!tipoID || !idNumero || !fechaNacimiento || !lugarNacimiento || !nacionalidad || !paisOrigen || !paisResidencia || !actividad || !sexo || !estadoCivil) {
+          return false;
+        }
+        // Validar que se haya subido al menos el frente del DNI
+        if (!dniFrenteArchivoId) {
           return false;
         }
         // Validar datos del cónyuge si el estado civil es CASADO
@@ -796,7 +942,7 @@ const CoTitularesPage = ({
       switch (stepIndex) {
         case 0: {
           const { nombres, apellidos, celular, correoElectronico, porcentajeParticipacion } = formData.datosPrincipales;
-          const { tipoID, idNumero, fechaNacimiento, lugarNacimiento, nacionalidad, paisOrigen, paisResidencia, actividad, sexo, estadoCivil, conyuge } = formData.datosPersonales;
+          const { tipoID, idNumero, fechaNacimiento, lugarNacimiento, nacionalidad, paisOrigen, paisResidencia, actividad, sexo, estadoCivil, conyuge, dniFrenteArchivoId } = formData.datosPersonales;
           if (!nombres || !apellidos || !celular || !correoElectronico) {
             setFormError('Completá al menos nombre, apellido, celular y correo electrónico.');
           } else if (showPorcentajeParticipacion) {
@@ -806,6 +952,8 @@ const CoTitularesPage = ({
             }
           } else if (!tipoID || !idNumero || !fechaNacimiento || !lugarNacimiento || !nacionalidad || !paisOrigen || !paisResidencia || !actividad || !sexo || !estadoCivil) {
             setFormError('Completá todos los datos personales requeridos.');
+          } else if (!dniFrenteArchivoId) {
+            setFormError('Debe subir al menos el frente del DNI.');
           } else if (estadoCivil === 'CASADO' && (!conyuge.nombres || !conyuge.apellidos || !conyuge.tipoID || !conyuge.idNumero || !conyuge.tipoClaveFiscal || !conyuge.claveFiscal)) {
             setFormError('Completá todos los datos del cónyuge requeridos.');
           }
@@ -850,6 +998,7 @@ const CoTitularesPage = ({
         setFormData(initialFormData);
         setEditingFirmanteId(null);
         setActiveStep(0);
+        setUploadedDniFiles([]);
         await cargarFirmantes();
       }
     });
@@ -1086,6 +1235,51 @@ const CoTitularesPage = ({
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+
+            {/* Subida de DNI */}
+            <Grid item xs={12}>
+              <Box display="flex" flexDirection="column" alignItems="center" gap="1rem" style={{ marginTop: '1rem' }}>
+                <input
+                  accept="image/*,.pdf"
+                  style={{ display: 'none' }}
+                  id="dni-file-upload"
+                  multiple
+                  type="file"
+                  onChange={handleDniFileUpload}
+                  disabled={uploadingDniFiles || (formData.datosPersonales.dniFrenteArchivoId && formData.datosPersonales.dniReversoArchivoId)}
+                />
+                <label htmlFor="dni-file-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={uploadingDniFiles ? <CircularProgress size={20} /> : <CloudUpload />}
+                    disabled={uploadingDniFiles || (formData.datosPersonales.dniFrenteArchivoId && formData.datosPersonales.dniReversoArchivoId)}
+                    style={{ borderColor: 'var(--main-green)', color: 'var(--main-green)' }}
+                  >
+                    {uploadingDniFiles ? 'Subiendo...' : 'Subir DNI (Frente y Dorso)'}
+                  </Button>
+                </label>
+                {uploadedDniFiles.length > 0 && (
+                  <Box display="flex" justifyContent="center" gap="0.5rem" flexWrap="wrap">
+                    {uploadedDniFiles.map((file) => (
+                      <Chip
+                        key={file.id}
+                        label={`DNI ${file.side === 'frente' ? 'Frente' : 'Dorso'}: ${file.name}`}
+                        onDelete={() => removeDniFile(file.id)}
+                        color="primary"
+                        variant="outlined"
+                        style={{ maxWidth: '300px' }}
+                      />
+                    ))}
+                  </Box>
+                )}
+                {!formData.datosPersonales.dniFrenteArchivoId && (
+                  <Typography variant="caption" style={{ color: '#f44336' }}>
+                    * Debe subir al menos el frente del DNI
+                  </Typography>
+                )}
+              </Box>
             </Grid>
             
             {/* Campos del Cónyuge - Solo mostrar si Estado Civil es CASADO */}
@@ -1535,15 +1729,15 @@ const CoTitularesPage = ({
               </TableHead>
               <TableBody>
                 {firmantes.map((firmante) => {
-                  const nombres = firmante?.nombres || '-';
-                  const apellidos = firmante?.apellidos || '-';
-                  const documentoTipo = firmante?.tipoID || '';
-                  const documentoNumero = firmante?.idNumero || '';
+                  const nombres = firmante?.datosPrincipales?.nombres || firmante?.nombres || '-';
+                  const apellidos = firmante?.datosPrincipales?.apellidos || firmante?.apellidos || '-';
+                  const documentoTipo = firmante?.datosPersonales?.tipoID || firmante?.tipoID || '';
+                  const documentoNumero = firmante?.datosPersonales?.idNumero || firmante?.idNumero || '';
                   const documento =
                     documentoTipo && documentoNumero ? `${documentoTipo} ${documentoNumero}` : documentoTipo || documentoNumero || '-';
                   const porcentaje =
                     showPorcentajeParticipacion &&
-                    (firmante?.porcentajeParticipacion ?? firmante?.porcentaje ?? firmante?.datosPrincipales?.porcentajeParticipacion ?? null);
+                    (firmante?.datosPrincipales?.porcentajeParticipacion ?? firmante?.porcentajeParticipacion ?? firmante?.porcentaje ?? null);
                   const porcentajeDisplay = porcentaje !== null && porcentaje !== undefined ? `${parseFloat(porcentaje).toFixed(2)}%` : '-';
 
                   return (

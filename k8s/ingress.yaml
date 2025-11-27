@@ -20,4 +20,5 @@ spec:
   tls:
   - hosts:
     - apertura.stsecurities.com.ar
+    secretName: apertura-tls
 

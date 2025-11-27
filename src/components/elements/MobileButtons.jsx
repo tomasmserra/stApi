@@ -3,9 +3,11 @@ import { styled, alpha } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { Link } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 import LabelImportantIcon from '@mui/icons-material/LabelImportant';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import MenuIcon from '@mui/icons-material/Menu';
+import { authenticationService } from '../../services';
 
 const StyledMenu = styled((props) => (
   <Menu
@@ -48,9 +50,11 @@ const StyledMenu = styled((props) => (
   },
 }));
 
-export default function MobileButtons() {
+export default function MobileButtons({ loggedIn, evaluarSesion }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const history = useHistory();
   const open = Boolean(anchorEl);
+  
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -58,11 +62,20 @@ export default function MobileButtons() {
     setAnchorEl(null);
   };
 
+  const handleCerrarSesion = () => {
+    handleClose();
+    authenticationService.logout();
+    if (evaluarSesion) {
+      evaluarSesion();
+    }
+    history.push('/');
+  };
+
   // Menú simplificado para dealApertura
   const menuItems = [
-    { title: 'Abrir Cuenta', link: '/apertura' },
+    { title: 'Abrir Cuenta', link: '/' },
     { title: 'Ingresar', link: '/login' },
-    { title: 'Operar', link: '/operar' }
+    { title: 'Operar', link: 'https://anima.stsecurities.com.ar', external: true }
   ];
 
   return (
@@ -87,17 +100,30 @@ export default function MobileButtons() {
         open={open}
         onClose={handleClose}
       >
-        {
+        {loggedIn ? (
+          <MenuItem onClick={handleCerrarSesion} disableRipple>
+            <ExitToAppIcon /> Cerrar Sesión
+          </MenuItem>
+        ) : (
           menuItems.map((item, index) => {
+            if (item.external) {
+              return (
+                <a key={index} href={item.link} target="_blank" rel="noreferrer" className="inline menu-subitem" style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <MenuItem onClick={handleClose} disableRipple>
+                    <LabelImportantIcon /> {item.title}
+                  </MenuItem>
+                </a>
+              );
+            }
             return (
               <Link key={index} to={item.link} className="inline menu-subitem">
                 <MenuItem onClick={handleClose} disableRipple>
                   <LabelImportantIcon /> {item.title}
                 </MenuItem>
               </Link>
-            )
+            );
           })
-        }
+        )}
       </StyledMenu>
     </div>
   );
